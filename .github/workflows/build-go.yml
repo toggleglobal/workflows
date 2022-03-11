@@ -1,0 +1,129 @@
+on:
+  workflow_call:
+    secrets:
+      SLACK_BOT_TOKEN: 
+        required: true
+    inputs:
+      coverage_threshold:
+        type: number
+        required: false
+        default: 75.0
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:11.4
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_PORT: 5432
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17.3
+        check-latest: false
+    - name: Verify dependencies
+      run: go mod verify
+    - name: Build
+      run: go build -v ./...
+    - name: Run go vet
+      run: go vet ./...
+    - name: Install staticcheck
+      run: go install honnef.co/go/tools/cmd/staticcheck@latest
+    - name: Run staticcheck
+      run: staticcheck ./...
+    - name: Install golint
+      run: go install golang.org/x/lint/golint@latest
+    - name: Run golint
+      run: golint ./...
+    - name: Run tests
+      run: go test -race -coverprofile=cover.out -covermode=atomic -vet=off ./...
+    - name: Quality Gate      
+      run: |
+        total=`go tool cover -func=cover.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
+        echo "Total test coverage = $total%"
+        if (( $(echo "$total ${{ inputs.coverage_threshold }}" | awk '{print ($1 < $2)}') )); then
+          echo "Quality gate failed. Coverage below minimum ${{ inputs.coverage_threshold }}%"
+          exit 1
+        fi
+    - name: Post Success message on Slack channel
+      if: success()
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        channel-id: 'dev-playground'
+        payload: |
+          {
+            "attachments": [
+              {
+                "color": "good",
+                "author_name": "${{ github.repository }}",
+                "author_link": "https://github.com/${{ github.repository }}",
+                "title": "Successful build",
+                "title_link": "https://github.com/${{ github.repository }}/commit/${{ github.sha }}/checks",
+                "fields": [
+                  {
+                    "title": "Author",
+                    "value": "${{ github.actor }}"
+                  },
+                  {
+                    "title": "Branch",
+                    "value": "${{ github.ref }}"
+                  },
+                  {
+                    "title": "Commit",
+                    "value": "${{ github.sha }}"
+                  }
+                ]
+              }
+            ]
+          }
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+    - name: Post failure a Slack channel
+      if: failure()
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        channel-id: 'dev-playground'
+        payload: |
+          {
+            "attachments": [
+              {
+                "color": "danger",
+                "author_name": "${{ github.repository }}",
+                "author_link": "https://github.com/${{ github.repository }}",
+                "title": "Failed build",
+                "title_link": "https://github.com/${{ github.repository }}/commit/${{ github.sha }}/checks",
+                "fields": [
+                  {
+                    "title": "Author",
+                    "value": "${{ github.actor }}"
+                  },
+                  {
+                    "title": "Branch",
+                    "value": "${{ github.ref }}"
+                  },
+                  {
+                    "title": "Commit",
+                    "value": "${{ github.sha }}"
+                  }
+                ]
+              }
+            ]
+          }
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
