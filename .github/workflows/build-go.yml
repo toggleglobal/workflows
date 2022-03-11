@@ -28,6 +28,19 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      cassandra:
+        image: cassandra:3.11.12
+        env:
+          CASSANDRA_CLUSTER_NAME: cassandracluster
+          JVM_OPTS: "-Xms512M -Xmx512M"
+          MAX_HEAP_SIZE: 512M
+          HEAP_NEWSIZE: 128M
+        ports:
+          - "9042:9042"
+      redis:
+        image: redis:5.0.14
+        ports:
+          - "6379:6379"
     steps:
     - name: Checkout
       uses: actions/checkout@v2
