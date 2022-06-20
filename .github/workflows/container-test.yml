@@ -12,7 +12,7 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        file: {context}/docker/go/Dockerfile
+        file: "{{context}}/docker/go/Dockerfile"
         push: false
         tags: |
           build-test
