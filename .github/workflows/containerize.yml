@@ -28,7 +28,7 @@ jobs:
         file: "${{github.workspace}}/docker/go/Dockerfile"
         push: true
         tags: |
-          ${{GITHUB_WORKSPACE}}:${{GITHUB_REF_NAME}}
+          ${{github.repository}}:${{github.head_ref}}
     - name: Build and Push Branch
       if: ${{github.ref_type == 'branch' }}
       uses: docker/build-push-action@v3
