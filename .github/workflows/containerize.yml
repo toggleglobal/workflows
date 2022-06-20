@@ -18,22 +18,24 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Checkout
+      uses: actions/checkout@v2
     - name: Build and Push Tag
-      if: ${{ GITHUB_REF_TYPE == 'tag' }}
+      if: ${{github.ref_type == 'tag' }}
       uses: docker/build-push-action@v3
       with:
         context: .
-        file: docker/go/Dockerfile
+        file: "${{github.workspace}}/docker/go/Dockerfile"
         push: true
         tags: |
           ${{GITHUB_WORKSPACE}}:${{GITHUB_REF_NAME}}
     - name: Build and Push Branch
-      if: ${{ GITHUB_REF_TYPE == 'branch' }}
+      if: ${{github.ref_type == 'branch' }}
       uses: docker/build-push-action@v3
       with:
         context: .
-        file: {context}/docker/go/Dockerfile
+        file: "${{github.workspace}}/docker/go/Dockerfile"
         push: true
         tags: |
-          ${{GITHUB_WORKSPACE}}:${{GITHUB_REF_NAME}}-${{GITHUB_RUN_NUMBER}}
-          ${{GITHUB_WORKSPACE}}:${{GITHUB_REF_NAME}}-latest
+          ${{github.repository}}:${{github.head_ref}}-${{github.run_number}}
+          ${{github.repository}}:${{github.head_ref}}-latest
