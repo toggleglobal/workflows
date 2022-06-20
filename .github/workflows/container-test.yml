@@ -1,0 +1,14 @@
+on: pull_request
+
+jobs:
+  container-test:
+    name: Container Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    - name: Build Only
+      uses: docker/build-push-action@v3
+      with:
+        push: false
+        tags: build-test
