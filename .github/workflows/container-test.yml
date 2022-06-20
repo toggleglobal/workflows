@@ -12,6 +12,10 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        file: docker/go/Dockerfile
+        file: {context}/docker/go/Dockerfile
         push: false
-        tags: build-test
+        tags: |
+          build-test
+          ${{GITHUB_WORKSPACE}}:${{GITHUB_REF_NAME}}
+          ${{GITHUB_WORKSPACE}}:${{GITHUB_REF_NAME}}-${{GITHUB_RUN_NUMBER}}
+          ${{GITHUB_WORKSPACE}}:${{GITHUB_REF_NAME}}-latest
