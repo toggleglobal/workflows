@@ -16,6 +16,6 @@ jobs:
         push: false
         tags: |
           build-test
-          ${{GITHUB_WORKSPACE}}:${{GITHUB_REF_NAME}}
-          ${{GITHUB_WORKSPACE}}:${{GITHUB_REF_NAME}}-${{GITHUB_RUN_NUMBER}}
-          ${{GITHUB_WORKSPACE}}:${{GITHUB_REF_NAME}}-latest
+          ${{github.workspace}}:${{github.ref_name}}
+          ${{github.workspace}}:${{github.ref_name}}-${{github.run_number}}
+          ${{github.workspace}}:${{github.ref_name}}-latest
