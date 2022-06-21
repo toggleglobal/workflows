@@ -8,7 +8,7 @@ on:
 
 jobs:
   container-test:
-    name: Container Test
+    name: Containerize
     runs-on: ubuntu-latest
     steps:
     - name: Set up Docker Buildx
@@ -29,6 +29,9 @@ jobs:
         push: true
         tags: |
           ${{github.repository}}:${{github.ref_name}}
+    - name: Setup environment variables
+      run: |
+        echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
     - name: Build and Push Branch
       if: ${{github.ref_type == 'branch' }}
       uses: docker/build-push-action@v3
@@ -37,5 +40,5 @@ jobs:
         file: "${{github.workspace}}/docker/go/Dockerfile"
         push: true
         tags: |
-          ${{github.repository}}:${{github.ref_name}}-${{github.run_number}}
+          ${{github.repository}}:${{env.SHORT_SHA}}
           ${{github.repository}}:${{github.ref_name}}-latest
