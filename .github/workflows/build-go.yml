@@ -1,13 +1,19 @@
 on:
   workflow_call:
     secrets:
-      SLACK_BOT_TOKEN: 
+      SLACK_BOT_TOKEN:
+        required: true
+      GO_PRIVATE_REPO_KEY:
         required: true
     inputs:
       coverage_threshold:
         type: number
         required: false
         default: 75.0
+    outputs:
+      short_sha:
+        description: "Short version of the git commit SHA"
+        value: ${{ jobs.build.outputs.shortsha }}
 
 jobs:
   build:
@@ -41,29 +47,64 @@ jobs:
         image: redis:5.0.14
         ports:
           - "6379:6379"
+    env:
+      POSTGRES_URI: "postgres://localhost:5432/postgres?user=postgres&password=postgres&sslmode=disable"
+      POSTGRES_MIGRATIONS: ../../db/migrations/postgres
+      CASSANDRA_CLUSTER_HOSTS: localhost
+      CASSANDRA_PORT: 9042
+      CASSANDRA_KEYSPACE: svc_test
+      CASSANDRA_MIGRATIONS: ../../db/migrations/cassandra
+      CASSANDRA_PASSWORD: cassandra
+      CASSANDRA_USER: cassandra
+      GOPRIVATE: github.com/toggleglobal/*
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+    outputs:
+      shortsha: ${{ steps.extract_info.outputs.shortsha }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+
+    - name: Extract Info
+      id: extract_info
+      run: |
+        echo "::set-output name=shortsha::$(git rev-parse --short HEAD)"
+
+    - name: Setup SSH and git
+      run: |
+        mkdir -p -m 0700 "$HOME/.ssh"
+        ssh-keyscan -H github.com >> $HOME/.ssh/known_hosts
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        ssh-add - <<< "${{ secrets.GO_PRIVATE_REPO_KEY }}"
+        git config --global url."git@github.com:toggleglobal".insteadOf https://github.com/toggleglobal
+
     - name: Setup Go
       uses: actions/setup-go@v2
       with:
         go-version: 1.17.3
         check-latest: false
+
     - name: Verify dependencies
       run: go mod verify
+
     - name: Build
       run: go build -v ./...
+
     - name: Run go vet
       run: go vet ./...
+
     - name: Install staticcheck
       run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
     - name: Run staticcheck
       run: staticcheck ./...
+
     - name: Install gotestsum
       run: go install gotest.tools/gotestsum@latest
+
     - name: Run tests
-      run: gotestsum -- -race -coverprofile=cover.out -covermode=atomic -vet=off ./...
-    - name: Quality Gate      
+      run: gotestsum --no-color=false -- -race -coverprofile=cover.out -covermode=atomic -vet=off ./...
+
+    - name: Quality Gate
       run: |
         total=`go tool cover -func=cover.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
         echo "Total test coverage = $total%"
@@ -71,6 +112,7 @@ jobs:
           echo "Quality gate failed. Coverage below minimum ${{ inputs.coverage_threshold }}%"
           exit 1
         fi
+
     - name: Post Success message on Slack channel
       if: success()
       uses: slackapi/slack-github-action@v1.18.0
