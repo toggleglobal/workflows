@@ -118,7 +118,7 @@ jobs:
 
     - name: Checkout Config
       if: env.GOLANG_VERSION == ''
-      # Checkout workflow repo to gain access to CONFIG file
+      # Checkout workflow repo to gain access to config file
       uses: actions/checkout@v2
       with:
         repository: toggleglobal/workflows
@@ -128,7 +128,7 @@ jobs:
     - name: Set Default Golang Build Version
       if: env.GOLANG_VERSION == ''
       run: |
-        echo "GOLANG_VERSION=$(yq -r '.golang.build.version' ./tmp/CONFIG)" >> $GITHUB_ENV
+        echo "GOLANG_VERSION=$(yq -r '.golang.build.version' ./tmp/config.yml)" >> $GITHUB_ENV
 
     - name: Setup SSH and git
       run: |
