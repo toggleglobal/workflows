@@ -46,7 +46,7 @@ jobs:
       with:
         repository: toggleglobal/workflows
         path: './tmp'
-        ref: image-push
+        ref: main
 
     - name: Set Default Golang Build Version
       if: env.GOLANG_VERSION == ''
