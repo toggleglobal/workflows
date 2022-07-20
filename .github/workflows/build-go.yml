@@ -6,47 +6,100 @@ on:
       GO_PRIVATE_REPO_KEY:
         required: true
     inputs:
-      coverage_threshold:
+      coverage-threshold:
+        description: Minimum percentage of code covered by tests for build to pass
         type: number
         required: false
         default: 75.0
-    outputs:
-      short_sha:
-        description: "Short version of the git commit SHA"
-        value: ${{ jobs.build.outputs.shortsha }}
+      golang-version:
+        description: Version of golang used to build application
+        required: false
+        type: string
+      requires-postgres:
+        type: boolean
+        required: false
+      requires-cassandra:
+        type: boolean
+        required: false
+      requires-redis:
+        type: boolean
+        required: false
 
 jobs:
-  build:
-    name: Build
+  required:
+    name: Compile Services Configuration
+    env:
+      POSTGRES: >-
+        "postgres": {
+        "image": "postgres:11.4",
+        "env": {
+        "POSTGRES_DB": "postgres",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "postgres",
+        "POSTGRES_PORT": 5432},
+        "ports": ["5432:5432"],
+        "options": "--health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5"
+        }
+      CASSANDRA: >-
+        "cassandra": {
+        "image": "cassandra:3.11.12",
+        "env": {
+        "CASSANDRA_CLUSTER_NAME": "cassandracluster",
+        "JVM_OPTS": "-Xms512M -Xmx512M",
+        "MAX_HEAP_SIZE": "512M",
+        "HEAP_NEWSIZE": "128M"},
+        "ports":["9042:9042"],
+        "options": "--health-cmd \"cqlsh --debug\" --health-interval 10s --health-timeout 5s --health-retries 5"
+        }
+      REDIS: >-
+        "redis": {
+        "image": "redis:5.0.14",
+        "ports":["6379:6379"],
+        "options": "--health-cmd \"redis-cli ping\" --health-interval 10s --health-timeout 5s --health-retries 5"
+        }
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:11.4
-        env:
-          POSTGRES_DB: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_PORT: 5432
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      cassandra:
-        image: cassandra:3.11.12
-        env:
-          CASSANDRA_CLUSTER_NAME: cassandracluster
-          JVM_OPTS: "-Xms512M -Xmx512M"
-          MAX_HEAP_SIZE: 512M
-          HEAP_NEWSIZE: 128M
-        ports:
-          - "9042:9042"
-      redis:
-        image: redis:5.0.14
-        ports:
-          - "6379:6379"
+    outputs:
+      services: ${{ steps.required.outputs.services }}
+    steps:
+      - name: Requires Postgres
+        if: inputs.requires-postgres
+        run: |
+          if [[ -z '${{ env.SERVICES }}' ]]; then
+            echo 'SERVICES=${{env.SERVICES}}${{env.POSTGRES}}' >> $GITHUB_ENV
+          else
+            echo 'SERVICES=${{env.SERVICES}},${{env.POSTGRES}}' >> $GITHUB_ENV
+          fi
+      - name: Requires Cassandra
+        if: inputs.requires-cassandra
+        run: |
+          if [[ -z '${{ env.SERVICES }}' ]]; then
+            echo 'SERVICES=${{env.SERVICES}}${{env.CASSANDRA}}' >> $GITHUB_ENV
+          else
+            echo 'SERVICES=${{env.SERVICES}},${{env.CASSANDRA}}' >> $GITHUB_ENV
+          fi
+      - name: Requires Redis
+        if: inputs.requires-redis
+        run: |
+          if [[ -z '${{ env.SERVICES }}' ]]; then
+            echo 'SERVICES=${{env.SERVICES}}${{env.REDIS}}' >> $GITHUB_ENV
+          else
+            echo 'SERVICES=${{env.SERVICES}},${{env.REDIS}}' >> $GITHUB_ENV
+          fi
+      - id: required
+        run: |
+          echo ::set-output name=services::'{${{env.SERVICES}}}'
+
+      - name: display string
+        run: |
+          echo "::notice ::Requires Postgres: ${{  inputs.requires-postgres }}"
+          echo "::notice ::Requires Cassandra: ${{  inputs.requires-cassandra }}"
+          echo "::notice ::Requires Redis: ${{ inputs.requires-redis }}"
+
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    needs: required
+    services: ${{fromJSON(needs.required.outputs.services)}}
     env:
       POSTGRES_URI: "postgres://localhost:5432/postgres?user=postgres&password=postgres&sslmode=disable"
       POSTGRES_MIGRATIONS: ../../db/migrations/postgres
@@ -56,18 +109,26 @@ jobs:
       CASSANDRA_MIGRATIONS: ../../db/migrations/cassandra
       CASSANDRA_PASSWORD: cassandra
       CASSANDRA_USER: cassandra
+      GOLANG_VERSION: ${{ inputs.golang-version }}
       GOPRIVATE: github.com/toggleglobal/*
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-    outputs:
-      shortsha: ${{ steps.extract_info.outputs.shortsha }}
     steps:
-    - name: Checkout
+    - name: Checkout Repository
       uses: actions/checkout@v2
 
-    - name: Extract Info
-      id: extract_info
+    - name: Checkout Config
+      if: env.GOLANG_VERSION == ''
+      # Checkout workflow repo to gain access to config file
+      uses: actions/checkout@v2
+      with:
+        repository: toggleglobal/workflows
+        path: './tmp'
+        ref: main
+
+    - name: Set Default Golang Build Version
+      if: env.GOLANG_VERSION == ''
       run: |
-        echo "::set-output name=shortsha::$(git rev-parse --short HEAD)"
+        echo "GOLANG_VERSION=$(yq -r '.golang.build.version' ./tmp/config.yml)" >> $GITHUB_ENV
 
     - name: Setup SSH and git
       run: |
@@ -80,7 +141,7 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17.3
+        go-version: ${{ env.GOLANG_VERSION }}
         check-latest: false
 
     - name: Verify dependencies
@@ -108,8 +169,8 @@ jobs:
       run: |
         total=`go tool cover -func=cover.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
         echo "Total test coverage = $total%"
-        if (( $(echo "$total ${{ inputs.coverage_threshold }}" | awk '{print ($1 < $2)}') )); then
-          echo "Quality gate failed. Coverage below minimum ${{ inputs.coverage_threshold }}%"
+        if (( $(echo "$total ${{ inputs.coverage-threshold }}" | awk '{print ($1 < $2)}') )); then
+          echo "Quality gate failed. Coverage below minimum ${{ inputs.coverage-threshold }}%"
           exit 1
         fi
 
