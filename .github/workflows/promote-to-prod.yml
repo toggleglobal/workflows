@@ -1,0 +1,42 @@
+on:
+  workflow_call:
+    secrets:
+      DEPLOYTOGGLE_TOKEN_GITHUB:
+        required: true
+
+jobs:
+  promote-to-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: "toggleglobal/apps-infrastructure"
+          token: ${{ secrets.DEPLOYTOGGLE_TOKEN_GITHUB }}
+      - name: setup git
+        run: |
+          git config --global user.email "deploy@toggle.ai"
+          git config --global user.name "Deploy Toggle"
+      - name: update image tag
+        env:
+          DEV_PATH: "./applications/dev"
+          PROD_PATH: "./applications/prod"
+        run: |
+          DEV_IMAGE=$(cat "${DEV_PATH}/${{ github.event.repository.name }}.yaml" | grep "image.tag" | awk -F "image.tag:" '{print $2}' | sed "s/ //g")
+          sed -i "s/image.tag:.*/image.tag: ${DEV_IMAGE}/g" "${PROD_PATH}/${{ github.event.repository.name }}.yaml"
+      - name: create pr
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOYTOGGLE_TOKEN_GITHUB }}
+        run: |
+          BRANCH_NAME=$(echo ${{ github.sha }} | cut -c -8)
+          git checkout -b ${BRANCH_NAME}
+          git add .
+          if git status | grep -q "Changes to be committed"
+          then
+            git commit --message "Promote to production from ${{ github.event.repository.name }}"
+            echo "Pushing git commit"
+            git push -u origin ${BRANCH_NAME}
+            echo "Creating a pull request"
+            gh pr create -t "Promote to production ${{ github.event.repository.name }}" -B "main" -b "Promote to production ${BRANCH_NAME}" -H ${BRANCH_NAME}
+          else
+            echo "No changes detected"
+          fi
