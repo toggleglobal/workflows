@@ -22,6 +22,12 @@ on:
         description: List of tags for the image (must be all lowercase). These will override the default tags.
         required: false
         type: string
+      repository-suffix:
+        description: >
+          Adds a hyphen separated suffix to the repository name used to create image tags (must be all lowercase).
+          This is primarily for use where a repository has more than one Dockerfile. This is ignored if tags has been set.
+        required: false
+        type: string
       golang-version:
         description: Version of golang used during build if specified as argument in Dockerfile
         required: false
@@ -35,6 +41,7 @@ jobs:
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       IMAGE_TAGS: ${{ inputs.tags }}
       GOLANG_VERSION: ${{ inputs.golang-version }}
+      REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
@@ -58,14 +65,20 @@ jobs:
       run: |
         echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
+    - name: Repository Suffix
+      # Prepend hyphen if set 
+      if: env.REPOSITORY_SUFFIX != ''
+      run: |
+        echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
+
     - name: Generate Image Tags
       # Do not overwrite tags if set already from input
       if: inputs.push-image && env.IMAGE_TAGS == ''
       # We're pushing an image and no tags supplied, so create defaults
       run: |
         echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
-        echo "${{github.repository}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
-        echo "${{github.repository}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
+        echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
+        echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
         echo "EOF" >> $GITHUB_ENV
 
     - name: Setup SSH
