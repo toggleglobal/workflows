@@ -7,9 +7,18 @@ on:
         required: true
       DEPLOYER_GITHUB_TOKEN:
         required: true
+    inputs:
+      repository-suffix:
+        description: >
+          Adds a hyphen separated suffix to the repository name used to create image tags (must be all lowercase).
+          This is primarily for use where a repository has more than one Dockerfile. This is ignored if tags has been set.
+        required: false
+        type: string
 
 jobs:
   update_image_dev:
+    env:
+      REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,11 +30,16 @@ jobs:
         run: |
           git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
           git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
+      - name: Repository Suffix
+        # Prepend hyphen if set
+        if: env.REPOSITORY_SUFFIX != ''
+        run: |
+          echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
       - name: update image tag
         run: |
           IMAGE_TAG="$(git rev-parse --short HEAD)"
           cd apps-infrastructure
-          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
+          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
           printf "common:\n  image:\n    tag: ${IMAGE_TAG}\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
       - name: commit new image
         run: |
