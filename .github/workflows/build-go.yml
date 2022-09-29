@@ -24,6 +24,9 @@ on:
       requires-redis:
         type: boolean
         required: false
+      requires-vault:
+        type: boolean
+        required: false
 
 jobs:
   required:
@@ -57,6 +60,15 @@ jobs:
         "ports":["6379:6379"],
         "options": "--health-cmd \"redis-cli ping\" --health-interval 10s --health-timeout 5s --health-retries 5"
         }
+      VAULT: >-
+        "vault": {
+        "image": "vault:latest",
+        "env": {
+        "VAULT_ADDR": "http://0.0.0.0:8200",
+        "VAULT_DEV_ROOT_TOKEN_ID": "vault-root-token"},
+        "ports":["8200:8200"],
+        "options": "--health-cmd \"vault version\" --health-interval 10s --health-timeout 5s --health-retries 5"
+        }
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.required.outputs.services }}
@@ -85,6 +97,14 @@ jobs:
           else
             echo 'SERVICES=${{env.SERVICES}},${{env.REDIS}}' >> $GITHUB_ENV
           fi
+      - name: Requires Vault
+        if: inputs.requires-vault
+        run: |
+          if [[ -z '${{ env.SERVICES }}' ]]; then
+            echo 'SERVICES=${{env.SERVICES}}${{env.VAULT}}' >> $GITHUB_ENV
+          else
+            echo 'SERVICES=${{env.SERVICES}},${{env.VAULT}}' >> $GITHUB_ENV
+          fi
       - id: required
         run: |
           echo ::set-output name=services::'{${{env.SERVICES}}}'
@@ -94,6 +114,7 @@ jobs:
           echo "::notice ::Requires Postgres: ${{  inputs.requires-postgres }}"
           echo "::notice ::Requires Cassandra: ${{  inputs.requires-cassandra }}"
           echo "::notice ::Requires Redis: ${{ inputs.requires-redis }}"
+          echo "::notice ::Requires Vault: ${{ inputs.requires-vault }}"
 
   build:
     name: Build & Test
@@ -109,6 +130,8 @@ jobs:
       CASSANDRA_MIGRATIONS: ../../db/migrations/cassandra
       CASSANDRA_PASSWORD: cassandra
       CASSANDRA_USER: cassandra
+      VAULT_ADDR: http://127.0.0.1:8200
+      VAULT_DEV_TOKEN_ID: vault-root-token
       GOLANG_VERSION: ${{ inputs.golang-version }}
       GOPRIVATE: github.com/toggleglobal/*
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
