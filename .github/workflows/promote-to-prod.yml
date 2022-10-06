@@ -42,7 +42,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
         run: |
-          BRANCH_NAME="$(echo ${GITHUB_SHA} | cut -c1-7)"
+          BRANCH_NAME="$(echo ${GITHUB_SHA} | cut -c1-7)${{env.REPOSITORY_SUFFIX}}"
           cd apps-infrastructure
           git checkout -b ${BRANCH_NAME}
           git add .
