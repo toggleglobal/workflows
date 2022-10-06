@@ -50,11 +50,11 @@ jobs:
           git add .
           if git status | grep -q "Changes to be committed"
           then
-            git commit --message "Promote to production from ${{ github.event.repository.name }}"
+            git commit --message "Promote to production from ${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}"
             echo "Pushing git commit"
             git push -u origin ${BRANCH_NAME}
             echo "Creating a pull request"
-            gh pr create -t "Promote to production ${{ github.event.repository.name }}" -B "main" -b "Promote to production ${{ github.event.repository.name }}" -H ${BRANCH_NAME}
+            gh pr create -t "Promote to production ${{ github.event.repository.name }}" -B "main" -b "Promote to production ${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}" -H ${BRANCH_NAME}
           else
             echo "No changes detected"
           fi
