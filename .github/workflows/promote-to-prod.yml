@@ -54,7 +54,7 @@ jobs:
             echo "Pushing git commit"
             git push -u origin ${BRANCH_NAME}
             echo "Creating a pull request"
-            gh pr create -t "Promote to production ${{ github.event.repository.name }}" -B "main" -b "Promote to production ${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}" -H ${BRANCH_NAME}
+            gh pr create -t "Promote to production ${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}" -B "main" -b "Promote to production ${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}" -H ${BRANCH_NAME}
           else
             echo "No changes detected"
           fi
