@@ -42,7 +42,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
         run: |
-          BRANCH_NAME="$(echo ${GITHUB_SHA} | cut -c1-7)${{env.REPOSITORY_SUFFIX}}"
+          BRANCH_NAME="${{ github.event.repository.name }}-${GITHUB_RUN_ID}${{env.REPOSITORY_SUFFIX}}"
           cd apps-infrastructure
           git checkout -b ${BRANCH_NAME}
           git add .
@@ -52,7 +52,7 @@ jobs:
             echo "Pushing git commit"
             git push -u origin ${BRANCH_NAME}
             echo "Creating a pull request"
-            gh pr create -t "Promote to production ${{ github.event.repository.name }}" -B "main" -b "Promote to production ${BRANCH_NAME}" -H ${BRANCH_NAME}
+            gh pr create -t "Promote to production ${{ github.event.repository.name }}" -B "main" -b "Promote to production ${{ github.event.repository.name }}" -H ${BRANCH_NAME}
           else
             echo "No changes detected"
           fi
