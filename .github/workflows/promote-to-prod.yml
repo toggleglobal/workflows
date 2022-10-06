@@ -17,6 +17,8 @@ on:
 
 jobs:
   promote-to-prod:
+    env:
+      REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
