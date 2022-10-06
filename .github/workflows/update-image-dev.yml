@@ -37,7 +37,7 @@ jobs:
           echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
       - name: update image tag
         run: |
-          IMAGE_TAG="$(git rev-parse --short HEAD)"
+          IMAGE_TAG="$(git rev-parse --short $GITHUB_SHA)"
           cd apps-infrastructure
           CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
           printf "common:\n  image:\n    tag: ${IMAGE_TAG}\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
