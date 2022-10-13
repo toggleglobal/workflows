@@ -27,6 +27,9 @@ on:
       requires-vault:
         type: boolean
         required: false
+      requires-clickhouse:
+        type: boolean
+        required: false
 
 jobs:
   required:
@@ -69,6 +72,13 @@ jobs:
         "ports":["8200:8200"],
         "options": "--health-cmd \"vault version\" --health-interval 10s --health-timeout 5s --health-retries 5"
         }
+      CLICKHOUSE: >-
+        "clickhouse": {
+        "image": "clickhouse/clickhouse-server:22.3",
+        "env": {
+        "ports":["9000:9000"],
+        "options": "--health-cmd \"clickhouse status\" --health-interval 10s --health-timeout 5s --health-retries 5"
+        }
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.required.outputs.services }}
@@ -105,6 +115,14 @@ jobs:
           else
             echo 'SERVICES=${{env.SERVICES}},${{env.VAULT}}' >> $GITHUB_ENV
           fi
+      - name: Requires ClickHouse
+        if: inputs.requires-clickhouse
+        run: |
+          if [[ -z '${{ env.SERVICES }}' ]]; then
+            echo 'SERVICES=${{env.SERVICES}}${{env.CLICKHOUSE}}' >> $GITHUB_ENV
+          else
+            echo 'SERVICES=${{env.SERVICES}},${{env.CLICKHOUSE}}' >> $GITHUB_ENV
+          fi
       - id: required
         run: |
           echo ::set-output name=services::'{${{env.SERVICES}}}'
@@ -115,6 +133,7 @@ jobs:
           echo "::notice ::Requires Cassandra: ${{  inputs.requires-cassandra }}"
           echo "::notice ::Requires Redis: ${{ inputs.requires-redis }}"
           echo "::notice ::Requires Vault: ${{ inputs.requires-vault }}"
+          echo "::notice ::Requires ClickHouse: ${{ inputs.requires-clickhouse }}"
 
   build:
     name: Build & Test
@@ -132,6 +151,7 @@ jobs:
       CASSANDRA_USER: cassandra
       VAULT_ADDR: http://127.0.0.1:8200
       VAULT_DEV_TOKEN_ID: vault-root-token
+      CLICKHOUSE_CONN_URI: "clickhouse://localhost:9000/default?username=default"
       GOLANG_VERSION: ${{ inputs.golang-version }}
       GOPRIVATE: github.com/toggleglobal/*
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
