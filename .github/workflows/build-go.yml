@@ -75,7 +75,6 @@ jobs:
       CLICKHOUSE: >-
         "clickhouse": {
         "image": "clickhouse/clickhouse-server:22.3",
-        "env": {
         "ports":["9000:9000"],
         "options": "--health-cmd \"clickhouse status\" --health-interval 10s --health-timeout 5s --health-retries 5"
         }
