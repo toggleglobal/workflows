@@ -151,6 +151,7 @@ jobs:
       VAULT_ADDR: http://127.0.0.1:8200
       VAULT_DEV_TOKEN_ID: vault-root-token
       CLICKHOUSE_CONN_URI: "clickhouse://localhost:9000/default?username=default"
+      CLICKHOUSE_MIGRATIONS: ../../db/migrations/clickhouse
       GOLANG_VERSION: ${{ inputs.golang-version }}
       GOPRIVATE: github.com/toggleglobal/*
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
