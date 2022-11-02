@@ -17,10 +17,8 @@ on:
       runs-as:
         description: Defines how the built image is expected to be run, e.g service or cronjob.
         default: service
-        type: choice
-        options:
-        - service
-        - cronjob
+        required: false
+        type: string
 
 jobs:
   promote-to-prod:
