@@ -14,6 +14,13 @@ on:
           This is primarily for use where a repository has more than one Dockerfile. This is ignored if tags has been set.
         required: false
         type: string
+      runs-as:
+        description: Defines how the built image is expected to be run, e.g service or cronjob.
+        default: service
+        type: choice
+        options:
+        - service
+        - cronjob
 
 jobs:
   promote-to-prod:
@@ -38,7 +45,11 @@ jobs:
       - name: update image tag prod
         run: |
           cd apps-infrastructure
-          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
+          if [[ ${{inputs.runs-as}} == "cronjob" ]]; then
+            CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}-cronjob/values"
+          else
+            CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
+          fi
           cp "${CHART_VALUES_PATH}/image-dev.yaml" "${CHART_VALUES_PATH}/image-prod.yaml"
       - name: create pr
         env:
