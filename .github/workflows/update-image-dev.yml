@@ -40,7 +40,7 @@ jobs:
           IMAGE_TAG="$(echo ${GITHUB_SHA} | cut -c1-7)"
           cd apps-infrastructure
           CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
-          printf "common:\n  image:\n    tag: ${IMAGE_TAG}\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
+          printf "common:\n  image:\n    tag: \"${IMAGE_TAG}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
       - name: commit new image
         run: |
           cd apps-infrastructure
