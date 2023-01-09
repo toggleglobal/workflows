@@ -167,7 +167,7 @@ jobs:
       with:
         repository: toggleglobal/workflows
         path: './tmp'
-        ref: main
+        ref: add-localization
 
     - name: Set Default Golang Build Version
       if: env.GOLANG_VERSION == ''
