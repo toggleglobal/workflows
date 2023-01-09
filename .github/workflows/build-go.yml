@@ -203,18 +203,11 @@ jobs:
     - name: Run staticcheck
       run: staticcheck ./...
 
-    - name: Run i18n strings extraction
+    - name: Extract source strings
       if: env.LOCALAZY_READ_KEY != '' && env.LOCALAZY_WRITE_KEY != ''
       run: |
         go install github.com/toggleglobal/germ-i18n-extract@latest &&
         germ-i18n-extract -out ./locales .
-
-    - name: Debug
-      run: |
-        ls -l
-        ls -l ./tmp
-        pwd
-        exit 1
 
     - name: Upload source strings to Localazy
       if: env.LOCALAZY_READ_KEY != '' && env.LOCALAZY_WRITE_KEY != ''
@@ -230,6 +223,10 @@ jobs:
       with:
         config_file: './tmp/localazy.go.json'
         read_key: ${{ env.LOCALAZY_READ_KEY }}
+
+    - name: Debug
+      run: |
+        ls -l locales/
 
     - name: Install gotestsum
       run: go install gotest.tools/gotestsum@latest
