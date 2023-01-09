@@ -211,8 +211,9 @@ jobs:
 
     - name: Debug
       run: |
-        ls -l &&
-        ls -l tmp &&
+        ls -l
+        ls -l ./tmp
+        pwd
         exit 1
 
     - name: Upload source strings to Localazy
