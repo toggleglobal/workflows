@@ -211,7 +211,9 @@ jobs:
 
     - name: Debug
       run: |
-        ls -l && exit 1
+        ls -l &&
+        ls -l tmp &&
+        exit 1
 
     - name: Upload source strings to Localazy
       if: env.LOCALAZY_READ_KEY != '' && env.LOCALAZY_WRITE_KEY != ''
