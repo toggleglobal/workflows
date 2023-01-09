@@ -218,15 +218,11 @@ jobs:
         write_key: ${{ env.LOCALAZY_WRITE_KEY }}
 
     - name: Download translations from Localazy
-      if: env.LOCALAZY_READ_KEY != '' && env.LOCALAZY_WRITE_KEY != ''
+      if: env.LOCALAZY_READ_KEY != ''
       uses: localazy/download@v1
       with:
         config_file: './tmp/localazy.go.json'
         read_key: ${{ env.LOCALAZY_READ_KEY }}
-
-    - name: Debug
-      run: |
-        ls -l locales/
 
     - name: Install gotestsum
       run: go install gotest.tools/gotestsum@latest

@@ -53,18 +53,18 @@ jobs:
       IMAGE_TAGS: ${{ inputs.tags }}
       GOLANG_VERSION: ${{ inputs.golang-version }}
       REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
+      LOCALAZY_READ_KEY: ${{ secrets.LOCALAZY_READ_KEY }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
     - name: Checkout Config
-      if: env.GOLANG_VERSION == ''
-      # Checkout workflow repo to gain access to config file
+      # Checkout workflow repo to gain access to config files
       uses: actions/checkout@v3
       with:
         repository: toggleglobal/workflows
         path: './tmp'
-        ref: main
+        ref: add-localization
 
     - name: Set Default Golang Build Version
       if: env.GOLANG_VERSION == ''
@@ -77,7 +77,7 @@ jobs:
         echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
     - name: Repository Suffix
-      # Prepend hyphen if set 
+      # Prepend hyphen if set
       if: env.REPOSITORY_SUFFIX != ''
       run: |
         echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
@@ -114,6 +114,13 @@ jobs:
         echo "Push Image: ${{inputs.push-image}}"
         echo "Tags: ${{env.IMAGE_TAGS}}"
         echo "Golang Version: ${{env.GOLANG_VERSION}}}"
+
+    - name: Download translations from Localazy
+      if: env.LOCALAZY_READ_KEY != ''
+      uses: localazy/download@v1
+      with:
+        config_file: './tmp/localazy.go.json'
+        read_key: ${{ env.LOCALAZY_READ_KEY }}
 
     - name: Build image and push to Docker Hub
       id: docker_build
@@ -168,5 +175,3 @@ jobs:
         else
           echo "No changes detected"
         fi
-
-
