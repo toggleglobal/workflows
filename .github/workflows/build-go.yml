@@ -155,13 +155,14 @@ jobs:
       GOLANG_VERSION: ${{ inputs.golang-version }}
       GOPRIVATE: github.com/toggleglobal/*
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      LOCALAZY_READ_KEY: ${{ secrets.LOCALAZY_READ_KEY }}
+      LOCALAZY_WRITE_KEY: ${{ secrets.LOCALAZY_WRITE_KEY }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
     - name: Checkout Config
-      if: env.GOLANG_VERSION == ''
-      # Checkout workflow repo to gain access to config file
+      # Checkout workflow repo to gain access to config files
       uses: actions/checkout@v2
       with:
         repository: toggleglobal/workflows
@@ -201,6 +202,27 @@ jobs:
 
     - name: Run staticcheck
       run: staticcheck ./...
+
+    - name: Extract source strings
+      if: env.LOCALAZY_READ_KEY != '' && env.LOCALAZY_WRITE_KEY != ''
+      run: |
+        go install github.com/toggleglobal/germ-i18n-extract@latest &&
+        germ-i18n-extract -out ./locales .
+
+    - name: Upload source strings to Localazy
+      if: env.LOCALAZY_READ_KEY != '' && env.LOCALAZY_WRITE_KEY != ''
+      uses: localazy/upload@v1
+      with:
+        config_file: './tmp/localazy.go.json'
+        read_key: ${{ env.LOCALAZY_READ_KEY }}
+        write_key: ${{ env.LOCALAZY_WRITE_KEY }}
+
+    - name: Download translations from Localazy
+      if: env.LOCALAZY_READ_KEY != ''
+      uses: localazy/download@v1
+      with:
+        config_file: './tmp/localazy.go.json'
+        read_key: ${{ env.LOCALAZY_READ_KEY }}
 
     - name: Install gotestsum
       run: go install gotest.tools/gotestsum@latest
