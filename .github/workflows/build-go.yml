@@ -202,13 +202,13 @@ jobs:
       run: staticcheck ./...
 
     - name: Run i18n strings extraction
-      if: ${{ secrets.LOCALAZY_READ_KEY != '' && secrets.LOCALAZY_WRITE_KEY != '' }}
+      if: secrets.LOCALAZY_READ_KEY != '' && secrets.LOCALAZY_WRITE_KEY != ''
       run: |
         go install github.com/toggleglobal/germ-i18n-extract@latest &&
         germ-i18n-extract -out ./locales .
 
     - name: Upload source strings to Localazy
-      if: ${{ secrets.LOCALAZY_READ_KEY != '' && secrets.LOCALAZY_WRITE_KEY != '' }}
+      if: secrets.LOCALAZY_READ_KEY != '' && secrets.LOCALAZY_WRITE_KEY != ''
       uses: localazy/upload@v1
       with:
         config_file: './tmp/localazy.go.json'
@@ -216,7 +216,7 @@ jobs:
         write_key: ${{ secrets.LOCALAZY_WRITE_KEY }}
 
     - name: Download translations from Localazy
-      if: ${{ secrets.LOCALAZY_READ_KEY != '' && secrets.LOCALAZY_WRITE_KEY != '' }}
+      if: secrets.LOCALAZY_READ_KEY != '' && secrets.LOCALAZY_WRITE_KEY != ''
       uses: localazy/download@v1
       with:
         config_file: './tmp/localazy.go.json'
