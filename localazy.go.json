@@ -1,11 +1,11 @@
 {
   "upload": {
     "type": "json",
-    "files": "locales/en.json",
+    "files": "locales/default.en.json",
     "features": ["content_as_object", "plural_object"]
   },
   "download": {
-    "files": "locales/${lang}.json",
+    "files": "locales/${fileWithoutExt}.${lang}.json",
     "includeSourceLang": true
   }
 }
