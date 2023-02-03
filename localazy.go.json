@@ -2,7 +2,7 @@
   "upload": {
     "type": "json",
     "files": "locales/default.en.json",
-    "features": ["content_as_object", "plural_object"]
+    "features": ["content_as_object", "plural_object", "filter_untranslated"]
   },
   "download": {
     "files": "locales/${fileWithoutExt}.${lang}.json",
