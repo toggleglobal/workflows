@@ -146,7 +146,7 @@ jobs:
       if: inputs.push-image
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{env.IMAGE_TAGS}}
+        image-ref: ${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}
         format: 'sarif'
         ignore-unfixed: true
         vuln-type: 'os,library'
