@@ -158,7 +158,7 @@ jobs:
 
     - name: Trivy Reports
       uses: actions/upload-artifact@v3
-      if: ${{ always() }}
+      if: inputs.push-image
       with:
         name: Security Report
         path: trivy-results.json
