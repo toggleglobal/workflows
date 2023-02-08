@@ -156,6 +156,13 @@ jobs:
         TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
+    - name: Trivy Reports
+      uses: actions/upload-artifact@v3
+      if: ${{ always() }}
+      with:
+        name: Security Report
+        path: trivy-results.json
+
     # commented until we have advanced security license
     # - name: Upload Trivy scan results to GitHub Security tab
     #   if: inputs.push-image
