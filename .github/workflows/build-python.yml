@@ -1,146 +1,56 @@
 on:
   workflow_call:
-    secrets:
-      DOCKERHUB_USERNAME:
-        required: true
-      DOCKERHUB_TOKEN:
-        required: true
-      DEPLOYER_EMAIL:
-        required: true
-      DEPLOYER_USERNAME:
-        required: true
-      DEPLOYER_GITHUB_TOKEN:
-        required: true
-
     inputs:
-      push-image:
-        description: Pushes built image to dockerhub when set to true.
-        required: false
-        type: boolean
-        default: false
-      dockerfile:
-        description: Path to the Dockerfile
+      python-version:
+        description: Version of python used during testing
         required: true
         type: string
-      tags:
-        description: List of tags for the image (must be all lowercase). These will override the default tags.
-        required: false
+      dependency-management:
+        description: Do you use pip or poetry to install dependencies
+        required: true
         type: string
-      repository-suffix:
-        description: >
-          Adds a hyphen separated suffix to the repository name used to create image tags (must be all lowercase).
-          This is primarily for use where a repository has more than one Dockerfile. This is ignored if tags has been set.
+      coverage-threshold:
+        description: Minimum percentage of code covered by tests for build to pass
+        type: number
         required: false
-        type: string
-      python-version:
-        description: Version of python used during build if specified as argument in Dockerfile
-        required: false
-        type: string
-      runs-as:
-        description: Defines how the built image is expected to be run, e.g service or cronjob.
-        default: service
-        required: false
-        type: string
+        default: 75.0
 
 jobs:
-  build-image:
-    name: Build
+  build:
+    name: Test
     runs-on: ubuntu-latest
-    env:
-      IMAGE_TAGS: ${{ inputs.tags }}
-      PYTHON_VERSION: ${{ inputs.python-version }}
-      REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
+
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-
-    - name: Short SHA
-      if: inputs.push-image && env.IMAGE_TAGS == ''
-      run: |
-        echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-    - name: Repository Suffix
-      # Prepend hyphen if set
-      if: env.REPOSITORY_SUFFIX != ''
-      run: |
-        echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
-
-    - name: Generate Image Tags
-      # Do not overwrite tags if set already from input
-      if: inputs.push-image && env.IMAGE_TAGS == ''
-      # We're pushing an image and no tags supplied, so create defaults
-      run: |
-        echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
-        echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
-        echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-      with:
-        install: true
-
-    - name: Login to DockerHub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: Info
-      run: |
-        echo "Push Image: ${{inputs.push-image}}"
-        echo "Tags: ${{env.IMAGE_TAGS}}"
-        echo "Python Version: ${{env.PYTHON_VERSION}}}"
-
-    - name: Build image and push to Docker Hub
-      id: docker_build
-      uses: docker/build-push-action@v3
-      with:
-        context: .
-        file: ${{ inputs.dockerfile }}
-        tags: ${{ env.IMAGE_TAGS }}
-        push: ${{ inputs.push-image }}
-        build-args: |
-          PYTHON_VERSION=${{ env.PYTHON_VERSION }}
-
-    - name: Image digest
-      run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
-
-    - name: Checkout Chart
-      if: inputs.push-image
-      uses: actions/checkout@v3
-      with:
-        repository: "toggleglobal/apps-infrastructure"
-        token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-        path: apps-infrastructure
-
-    - name: Setup git
-      if: inputs.push-image
-      run: |
-        git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
-        git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
-
-    - name: Update image tag
-      if: inputs.push-image
-      run: |
-        cd apps-infrastructure
-        if [[ ${{inputs.runs-as}} == "cronjob" ]]; then
-          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}-cronjob/values"
-        else
-          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
-        fi
-        printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
-
-    - name: Commit new image
-      if: inputs.push-image
-      run: |
-        cd apps-infrastructure
-        git add .
-        if git status | grep -q "Changes to be committed"
-        then
-          git commit --message "Update dev image ${{ github.event.repository.name }}"
-          echo "Pushing git commit"
-          git push -u origin main
-        else
-          echo "No changes detected"
-        fi
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Install dependencies (Pip)
+        if: inputs.dependency-management == 'pip'
+        run: |
+          python -m pip install --upgrade pip
+          pip install coverage flake8 pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Install dependencies (Poetry)
+        if: inputs.dependency-management == 'poetry'
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry config virtualenvs.create false
+          poetry add coverage flake8 pytest
+          poetry install
+      - name: Lint with flake8
+        run: |
+          flake8 .
+      - name: Test with pytest
+        run: |
+          coverage run -m pytest
+      - name: Coverage
+        run: |
+          total=`coverage report | grep TOTAL | grep -o '[0-9][0-9]%'`
+          total=${total::-1}
+          echo "Total test coverage = $total%"
+          if (( $(echo "$total ${{ inputs.coverage-threshold }}" | awk '{print ($1 < $2)}') )); then
+            echo "Quality gate failed. Coverage below minimum ${{ inputs.coverage-threshold }}%"
+            exit 1
+          fi
