@@ -170,8 +170,7 @@ jobs:
         image: ${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}
         ignore-unfixed: true
         vuln-type: 'os,library'
-        severity: 'CRITICAL,HIGH'
-
+       
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
       uses: actions/checkout@v3
