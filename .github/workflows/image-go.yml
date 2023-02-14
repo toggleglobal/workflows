@@ -163,12 +163,14 @@ jobs:
         name: Security Report
         path: trivy-results.json
 
-    # commented until we have advanced security license
-    # - name: Upload Trivy scan results to GitHub Security tab
-    #   if: inputs.push-image
-    #   uses: github/codeql-action/upload-sarif@v2
-    #   with:
-    #     sarif_file: 'trivy-results.sarif'
+    - name: Trivy Lazy Vulnerability
+      uses: lazy-actions/gitrivy@v3
+      with:
+        token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+        image: ${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH'
 
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
