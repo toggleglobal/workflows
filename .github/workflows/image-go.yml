@@ -167,9 +167,8 @@ jobs:
       uses: lazy-actions/gitrivy@v3
       with:
         token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-        image: ${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}
-        ignore-unfixed: true
-        vuln-type: 'os,library'
+        image: python:3.4-alpine
+        severity: 'HIGH,CRITICAL'
        
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
