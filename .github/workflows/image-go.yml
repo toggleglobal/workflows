@@ -154,20 +154,14 @@ jobs:
         TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    # - name: Trivy Reports
-    #   uses: actions/upload-artifact@v3
-    #   if: inputs.push-image
-    #   with:
-    #     name: Security Report
-    #     path: trivy-results.json
+    - name: Trivy Reports
+      uses: actions/upload-artifact@v3
+      if: inputs.push-image
+      with:
+        name: Security Report
+        path: trivy-results.json
+        retention-days: 5
 
-    # - name: Trivy Lazy Vulnerability
-    #   uses: lazy-actions/gitrivy@v3
-    #   with:
-    #     token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-    #     image: ${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}
-    #     severity: HIGH,CRITICAL
-       
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
       uses: actions/checkout@v3
