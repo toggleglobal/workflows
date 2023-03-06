@@ -20,6 +20,11 @@ on:
         required: false
         type: boolean
         default: false
+      skip-deploy:
+        description: Prevents modifications to apps-infrastructure when set to true. Primarily for testing.
+        required: false
+        type: boolean
+        default: false
       dockerfile:
         description: Path to the Dockerfile
         required: true
@@ -137,8 +142,29 @@ jobs:
     - name: Image digest
       run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
 
-    - name: Checkout Chart
+    - name: Run Trivy vulnerability scanner
       if: inputs.push-image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}
+        format: 'json'
+        output: 'trivy-results.json'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+      env:
+        TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Trivy Reports
+      uses: actions/upload-artifact@v3
+      if: inputs.push-image
+      with:
+        name: Security Report
+        path: trivy-results.json
+        retention-days: 5
+
+    - name: Checkout Chart
+      if: inputs.push-image && !inputs.skip-deploy
       uses: actions/checkout@v3
       with:
         repository: "toggleglobal/apps-infrastructure"
@@ -146,13 +172,13 @@ jobs:
         path: apps-infrastructure
 
     - name: Setup git
-      if: inputs.push-image
+      if: inputs.push-image && !inputs.skip-deploy
       run: |
         git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
         git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
 
     - name: Update image tag
-      if: inputs.push-image
+      if: inputs.push-image && !inputs.skip-deploy
       run: |
         cd apps-infrastructure
         if [[ ${{inputs.runs-as}} == "cronjob" ]]; then
@@ -163,7 +189,7 @@ jobs:
         printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
 
     - name: Commit new image
-      if: inputs.push-image
+      if: inputs.push-image && !inputs.skip-deploy
       run: |
         cd apps-infrastructure
         git add .
