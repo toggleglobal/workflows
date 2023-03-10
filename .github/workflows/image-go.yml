@@ -163,7 +163,6 @@ jobs:
         retention-days: 5
 
     - name: Run Trivy Parser
-      uses: actions/checkout@v3
       if: inputs.push-image
       run: |
          chmod +x ./trivyresult_parser.sh
