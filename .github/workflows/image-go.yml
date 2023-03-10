@@ -150,7 +150,6 @@ jobs:
         format: 'json'
         output: 'trivy-results.json'
         ignore-unfixed: true
-        vuln-type: 'os,library'
       env:
         TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -162,6 +161,22 @@ jobs:
         name: Security Report
         path: trivy-results.json
         retention-days: 5
+
+    - name: Run Trivy Parser
+      uses: actions/checkout@v3
+      if: inputs.push-image
+      run: |
+         chmod +x ./trivyresult_parser.sh
+         ./trivyresult_parser.sh
+      shell: bash
+
+    - name: comment PR with Trivy Results
+      if: inputs.push-image
+      uses: machine-learning-apps/pr-comment@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+      with:
+        path: formattedTrivy.txt
 
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
