@@ -18,6 +18,11 @@ on:
         required: false
         type: boolean
         default: false
+      is-poc:
+        description: Use poc environment to deploy if set to true
+        required: false
+        type: boolean
+        default: false
       dockerfile:
         description: Path to the Dockerfile
         required: true
@@ -129,8 +134,11 @@ jobs:
         else
           CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
         fi
-        printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
-
+        if [[ ${{inputs.is-poc}} == true ]]; then
+          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-poc.yaml"
+        else
+          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
+        fi
     - name: Commit new image
       if: inputs.push-image
       run: |
@@ -138,7 +146,7 @@ jobs:
         git add .
         if git status | grep -q "Changes to be committed"
         then
-          git commit --message "Update dev image ${{ github.event.repository.name }}"
+          git commit --message "Update image ${{ github.event.repository.name }}"
           echo "Pushing git commit"
           git push -u origin main
         else
