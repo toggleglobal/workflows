@@ -162,12 +162,6 @@ jobs:
         path: trivy-results.json
         retention-days: 5
 
-    # - name: Extract version from package.json
-    #   uses: sergeysova/jq-action@v2
-    #   id: version
-    #   with:
-    #     cmd: 'jq .version package.json -r'
-
     - name: Checkout Workflows
       if: inputs.push-image
       uses: actions/checkout@v3
@@ -176,13 +170,6 @@ jobs:
         token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
         path: workflows
         ref: 'add-trivy-result-as-pr-comment'
-
-    - name: Check path
-      if: inputs.push-image
-      run: |
-        pwd
-        ls -alh
-      
 
     - name: Run Trivy Parser
       id: trivy-parser
@@ -195,6 +182,7 @@ jobs:
       run: |
         pwd
         ls -alh
+        echo ${{ steps.trivy-parser.outputs.stdout }}  
 
     # - name: comment PR with Trivy Results
     #   if: inputs.push-image

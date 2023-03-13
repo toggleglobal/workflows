@@ -9,7 +9,6 @@ then
 
     vulnList=$(echo $trivyResults | jq '[.Results[0] | .Vulnerabilities[] | { CVE: .VulnerabilityID, PkgID: .PkgID, Severity: .Severity, URL: .PrimaryURL}]' )
 
-    #rm formattedTrivy.txt
 
     printf '%b\n' "Severity    | CVE     | URL       " >> formattedTrivy.txt
     printf '%b\n' "------------|---------| --------- " >> formattedTrivy.txt
@@ -24,7 +23,14 @@ then
 
     cat formattedTrivy.txt
 
-    if [ "$criticalFlag" == true ]; then echo "Critical CVE found"; else echo "No Critical CVE  found"; fi
+    if [ "$criticalFlag" == true ]; 
+    then 
+        echo "Critical CVE found" ; 
+        exit 1
+    else 
+        echo "No Critical CVE  found"; 
+        exit 0
+    fi
 else
     echo "Results File not inserted"
 fi
