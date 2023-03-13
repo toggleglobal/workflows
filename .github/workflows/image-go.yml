@@ -177,12 +177,10 @@ jobs:
       run: ./workflows/.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
       shell: bash
 
-    - name: Check path 2
+    - name: Debug
       if: inputs.push-image
       run: |
-        pwd
-        ls -alh
-        echo ${{ steps.trivy-parser.outputs.stdout }}  
+        echo 'Output do Script ' ${{ steps.trivy-parser.outputs.stdout }}  
 
     # - name: comment PR with Trivy Results
     #   if: inputs.push-image
@@ -192,9 +190,9 @@ jobs:
     #   with:
     #     path: formattedTrivy.txt
 
-    # - name: Check Critical Severity
-    #   if: steps.trivy-parser == 'true'
-    #   run: exit 1
+    - name: Fail with Critical
+      if: steps.trivy-parser.outputs.stdout == 0
+      run: exit 1
 
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
