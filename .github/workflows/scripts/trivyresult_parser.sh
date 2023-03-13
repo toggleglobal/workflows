@@ -1,24 +1,28 @@
 #!/bin/bash
 
-trivyResults=$(<"$1")
+if [ ! -z "$1" ]
+then
+    trivyResults=$(<"$1")
+    echo "Results File inserted"
 
-criticalFlag=false
+    criticalFlag=false
 
-vulnList=$(echo $trivyResults | jq '[.Results[0] | .Vulnerabilities[] | { CVE: .VulnerabilityID, PkgID: .PkgID, Severity: .Severity, URL: .PrimaryURL}]' )
+    vulnList=$(echo $trivyResults | jq '[.Results[0] | .Vulnerabilities[] | { CVE: .VulnerabilityID, PkgID: .PkgID, Severity: .Severity, URL: .PrimaryURL}]' )
 
-rm formattedTrivy.txt
+    rm formattedTrivy.txt
 
-printf '%b\n' "Severity    | CVE     | URL       " >> formattedTrivy.txt
-printf '%b\n' "------------|---------| --------- " >> formattedTrivy.txt
+    printf '%b\n' "Severity    | CVE     | URL       " >> formattedTrivy.txt
+    printf '%b\n' "------------|---------| --------- " >> formattedTrivy.txt
 
-for i in $(jq -c '.[]' <<< "$vulnList"); 
-do 
-    if [ "$(jq -r '.Severity?' <<< "$i")" = "CRITICAL" ] ; then
-        criticalFlag=true
-    fi
-    printf '%b\n' "$(jq -j '.Severity," | ", .CVE, " | ",  .URL' <<< "$i")" >> formattedTrivy.txt
-done 
+    for i in $(jq -c '.[]' <<< "$vulnList"); 
+    do 
+        if [ "$(jq -r '.Severity?' <<< "$i")" = "CRITICAL" ] ; then
+            criticalFlag=true
+        fi
+        printf '%b\n' "$(jq -j '.Severity," | ", .CVE, " | ",  .URL' <<< "$i")" >> formattedTrivy.txt
+    done 
 
-echo $criticalFlag
-
-
+    if [ "$criticalFlag" == true ]; then echo "Critical CVE found"; else echo "No Critical CVE  found"; fi
+else
+    echo "Results File not inserted"
+fi

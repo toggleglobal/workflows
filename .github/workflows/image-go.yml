@@ -177,6 +177,13 @@ jobs:
         path: workflows
         ref: 'add-trivy-result-as-pr-comment'
 
+    - name: Check path
+      if: inputs.push-image
+      run: |
+        pwd
+        ls -alh
+      
+
     - name: Run Trivy Parser
       id: trivy-parser
       if: inputs.push-image
