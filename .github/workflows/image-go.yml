@@ -167,7 +167,7 @@ jobs:
     #   id: version
     #   with:
     #     cmd: 'jq .version package.json -r'
-
+    - uses: actions/checkout@v3
     - name: Run Trivy Parser
       id: trivy-parser
       if: inputs.push-image
