@@ -167,10 +167,19 @@ jobs:
     #   id: version
     #   with:
     #     cmd: 'jq .version package.json -r'
+
+    - name: Checkout Workflows
+      if: inputs.push-image
+      uses: actions/checkout@v3
+      with:
+        repository: "toggleglobal/workflows"
+        token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+        path: workflows
+
     - name: Run Trivy Parser
       id: trivy-parser
       if: inputs.push-image
-      run: ./.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
+      run: ./workflows/.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
       shell: bash
 
     # - name: comment PR with Trivy Results
