@@ -190,6 +190,12 @@ jobs:
       run: ./workflows/.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
       shell: bash
 
+    - name: Check path 2
+      if: inputs.push-image
+      run: |
+        pwd
+        ls -alh
+
     # - name: comment PR with Trivy Results
     #   if: inputs.push-image
     #   uses: machine-learning-apps/pr-comment@master
