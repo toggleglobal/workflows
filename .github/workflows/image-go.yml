@@ -171,7 +171,7 @@ jobs:
     - name: Run Trivy Parser
       id: trivy-parser
       if: inputs.push-image
-      run: ./.github/workflows/scripts/trivyresult_parser.sh
+      run: ./.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
       shell: bash
 
     # - name: comment PR with Trivy Results
