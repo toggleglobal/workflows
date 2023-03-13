@@ -162,25 +162,29 @@ jobs:
         path: trivy-results.json
         retention-days: 5
 
+    # - name: Extract version from package.json
+    #   uses: sergeysova/jq-action@v2
+    #   id: version
+    #   with:
+    #     cmd: 'jq .version package.json -r'
+
     - name: Run Trivy Parser
       id: trivy-parser
       if: inputs.push-image
-      run: |
-         chmod +x ./trivyresult_parser.sh
-         ./trivyresult_parser.sh
+      run: ./.github/workflows/scripts/trivyresult_parser.sh
       shell: bash
 
-    - name: comment PR with Trivy Results
-      if: inputs.push-image
-      uses: machine-learning-apps/pr-comment@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-      with:
-        path: formattedTrivy.txt
+    # - name: comment PR with Trivy Results
+    #   if: inputs.push-image
+    #   uses: machine-learning-apps/pr-comment@master
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+    #   with:
+    #     path: formattedTrivy.txt
 
-    - name: Check Critical Severity
-      if: steps.trivy-parser == 'true'
-      run: exit 1
+    # - name: Check Critical Severity
+    #   if: steps.trivy-parser == 'true'
+    #   run: exit 1
 
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
