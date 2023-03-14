@@ -162,13 +162,13 @@ jobs:
         path: trivy-results.json
         retention-days: 5
 
-    - name: Checkout Workflows Script
+    - name: Checkout Workflows Repo
       if: inputs.push-image
       uses: actions/checkout@v3
       with:
         repository: "toggleglobal/workflows"
         token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-        path: workflows/.github/workflows/scripts
+        path: workflows
         ref: 'add-trivy-result-as-pr-comment'
 
     - name: Run Trivy Parser
