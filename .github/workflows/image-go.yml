@@ -180,6 +180,12 @@ jobs:
     #   if: inputs.push-image && steps.trivy-parser.outputs.stdout == 1
     #   run: exit 1
 
+    - name: Check if PR Opened and add Trivy Results
+      if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ./workflows/.github/workflows/scripts/formattedTrivy.txt
+
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
       uses: actions/checkout@v3
