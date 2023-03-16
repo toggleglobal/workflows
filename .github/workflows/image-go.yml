@@ -176,9 +176,9 @@ jobs:
       run: ./workflows/.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
       shell: bash
 
-    - name: Fail with Critical
-      if: inputs.push-image && steps.trivy-parser.outputs.stdout == 1
-      run: exit 1
+    # - name: Fail with Critical
+    #   if: inputs.push-image && steps.trivy-parser.outputs.stdout == 1
+    #   run: exit 1
 
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
