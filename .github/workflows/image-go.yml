@@ -150,18 +150,35 @@ jobs:
         format: 'json'
         output: 'trivy-results.json'
         ignore-unfixed: true
-        vuln-type: 'os,library'
       env:
         TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Trivy Reports
+    - name: Upload Trivy Reports
       uses: actions/upload-artifact@v3
       if: inputs.push-image
       with:
         name: Security Report
         path: trivy-results.json
         retention-days: 5
+
+    - name: Checkout Workflows Repo
+      if: inputs.push-image
+      uses: actions/checkout@v3
+      with:
+        repository: "toggleglobal/workflows"
+        token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+        path: workflows
+
+    - name: Run Trivy Parser
+      id: trivy-parser
+      if: inputs.push-image
+      run: ./workflows/.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
+      shell: bash
+
+    # - name: Fail with Critical
+    #   if: inputs.push-image && steps.trivy-parser.outputs.stdout == 1
+    #   run: exit 1
 
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
