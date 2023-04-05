@@ -70,6 +70,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Checkout Config
+        # Checkout workflow repo to gain access to config files
+        uses: actions/checkout@v3
+        with:
+          repository: toggleglobal/workflows
+          path: './tmp'
+          ref: main
+
       - name: Short SHA
         if: inputs.push-image
         run: |
