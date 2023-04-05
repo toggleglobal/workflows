@@ -82,6 +82,7 @@ jobs:
         if: inputs.push-image
         run: |
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          
       - name: Generate Image Tags
         # Do not overwrite tags if set already from input
         if: inputs.push-image
@@ -91,6 +92,12 @@ jobs:
           echo "${{github.repository}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
           echo "${{github.repository}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+
+      - name: Setup SSH
+          run: |
+            mkdir -p -m 0700 "$HOME/.ssh"
+            ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+            ssh-add - <<< "${{ secrets.GO_PRIVATE_REPO_KEY }}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
