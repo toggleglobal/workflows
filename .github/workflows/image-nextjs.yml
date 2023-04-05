@@ -58,6 +58,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     env:
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       IMAGE_TAGS: ${{ inputs.tags }}
       NEXT_PUBLIC_GA: ${{ inputs.NEXT_PUBLIC_GA }}
       NEXT_PUBLIC_NAVER: ${{  inputs.NEXT_PUBLIC_NAVER }}
