@@ -60,6 +60,8 @@ jobs:
     env:
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       IMAGE_TAGS: ${{ inputs.tags }}
+      SENTRY_AUTH_TOKEN: ${{  secrets.SENTRY_AUTH_TOKEN }}
+      SIB_KEY: ${{ secrets.SIB_KEY }}
       NEXT_PUBLIC_GA: ${{ inputs.NEXT_PUBLIC_GA }}
       NEXT_PUBLIC_NAVER: ${{  inputs.NEXT_PUBLIC_NAVER }}
       NEXT_PUBLIC_API_PATH: ${{ inputs.NEXT_PUBLIC_API_PATH }}
@@ -125,8 +127,8 @@ jobs:
           push: ${{ inputs.push-image }}
           ssh: default
           build-args: |
-            SENTRY_AUTH_TOKEN=${{  secrets.SENTRY_AUTH_TOKEN }}
-            SIB_KEY=${{ secrets.SIB_KEY }}
+            SENTRY_AUTH_TOKEN=${{  env.SENTRY_AUTH_TOKEN }}
+            SIB_KEY=${{ env.SIB_KEY }}
             NEXT_PUBLIC_GA=${{ env.NEXT_PUBLIC_GA }}
             NEXT_PUBLIC_NAVER=${{  env.NEXT_PUBLIC_NAVER }}
             NEXT_PUBLIC_DOMAIN=${{ env.NEXT_PUBLIC_DOMAIN }}
