@@ -116,6 +116,8 @@ jobs:
         run: |
           echo "Push Image: ${{inputs.push-image}}"
           echo "Tags: ${{env.IMAGE_TAGS}}"
+          echo "Sentry DSN: ${{env.SENTRY_AUTH_TOKEN}}"
+          echo "SIB KEY: ${{env.SIB_KEY}}"
 
       - name: Build dev image and push to Docker Hub
         id: docker_build
