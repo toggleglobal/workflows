@@ -92,13 +92,14 @@ jobs:
 
       - name: Generate Image Tags
         # Do not overwrite tags if set already from input
-        if: inputs.push-image
+        if: inputs.push-image && inputs.tags != prod
         # We're pushing an image and no tags supplied, so create defaults
         run: |
           echo "${{env.IMAGE_TAGS}}<<EOF" >> $GITHUB_ENV
           echo "${{github.repository}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
           echo "${{github.repository}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+          echo $GITHUB_ENV
 
       - name: Setup SSH
         run: |
