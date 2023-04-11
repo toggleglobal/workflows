@@ -51,6 +51,11 @@ on:
         description: Next public cookie pro
         required: true
         type: string
+      environment:
+        description: Flag to distinguish env
+        required: false
+        type: string
+
 
 
 jobs:
@@ -116,8 +121,6 @@ jobs:
         run: |
           echo "Push Image: ${{inputs.push-image}}"
           echo "Tags: ${{env.IMAGE_TAGS}}"
-          echo "Sentry DSN: ${{env.SENTRY_AUTH_TOKEN}}"
-          echo "SIB KEY: ${{env.SIB_KEY}}"
 
       - name: Build dev image and push to Docker Hub
         id: docker_build
@@ -137,25 +140,6 @@ jobs:
             NEXT_PUBLIC_COOKIE_PRO=${{  env.NEXT_PUBLIC_COOKIE_PRO }}
             NEXT_PUBLIC_EARNINGS_URL=${{  env.NEXT_PUBLIC_EARNINGS_URL }}
             NEXT_PUBLIC_API_PATH=${{ env.NEXT_PUBLIC_API_PATH }}
-
-      # - name: Build prod image and push to Docker Hub
-      #   id: docker_build
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: .
-      #     file: ${{ inputs.dockerfile }}
-      #     tags: ${{ env.IMAGE_TAGS }}
-      #     push: ${{ inputs.push-image }}
-      #     ssh: default
-      #     build-args: |
-      #       SENTRY_AUTH_TOKEN=${{  secrets.SENTRY_AUTH_TOKEN }}
-      #       SIB_KEY=${{ secrets.SIB_KEY }}
-      #       NEXT_PUBLIC_GA=${{ env.NEXT_PUBLIC_GA }}
-      #       NEXT_PUBLIC_NAVER=${{  env.NEXT_PUBLIC_NAVER }}
-      #       NEXT_PUBLIC_DOMAIN=${{ env.NEXT_PUBLIC_DOMAIN }}
-      #       NEXT_PUBLIC_COOKIE_PRO=${{  env.NEXT_PUBLIC_COOKIE_PRO }}
-      #       NEXT_PUBLIC_EARNINGS_URL=${{  env.NEXT_PUBLIC_EARNINGS_URL }}
-      #       NEXT_PUBLIC_API_PATH=${{ env.NEXT_PUBLIC_API_PATH }}
 
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
