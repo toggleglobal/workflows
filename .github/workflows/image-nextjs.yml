@@ -123,7 +123,7 @@ jobs:
           echo "Push Image: ${{inputs.push-image}}"
           echo "Tags: ${{env.IMAGE_TAGS}}"
 
-      - name: Build dev image and push to Docker Hub
+      - name: Build image and push to Docker Hub
         id: docker_build
         uses: docker/build-push-action@v3
         with:
