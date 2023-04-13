@@ -52,3 +52,4 @@ jobs:
       - name: Test with tox
         if: inputs.use_tox == 'y'
         run: tox -e py
+
