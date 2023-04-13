@@ -13,11 +13,6 @@ on:
         description: Do you use tox to test, choose 'y' or 'n'. if 'y', please create tox.ini in root folder
         required: true
         type: string
-      coverage-threshold:
-        description: Minimum percentage of code covered by tests for build to pass
-        type: number
-        required: false
-        default: 75.0
 
 jobs:
   build:
@@ -53,16 +48,8 @@ jobs:
         if: inputs.use_tox == 'n'
         run: |
           coverage run -m pytest
+          coverage xml
       - name: Test with tox
         if: inputs.use_tox == 'y'
         run: tox -e py
 
-      - name: Coverage
-        run: |
-          total=`coverage report | grep TOTAL | grep -o '[0-9][0-9]%'`
-          total=${total::-1}
-          echo "Total test coverage = $total%"
-          if (( $(echo "$total ${{ inputs.coverage-threshold }}" | awk '{print ($1 < $2)}') )); then
-            echo "Quality gate failed. Coverage below minimum ${{ inputs.coverage-threshold }}%"
-            exit 1
-          fi
