@@ -13,7 +13,10 @@ on:
         description: Do you use tox to test, choose 'y' or 'n'. if 'y', please create tox.ini in root folder
         required: true
         type: string
-
+      use_sonarcloud:
+        description: Do you use sonarcloud, choose 'y' or 'n'.
+        required: true
+        type: string
 jobs:
   build:
     name: Test
@@ -52,4 +55,9 @@ jobs:
       - name: Test with tox
         if: inputs.use_tox == 'y'
         run: tox -e py
-
+      - name: SonarCloud Scan
+        if: inputs.use_sonarcloud == 'y'
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
