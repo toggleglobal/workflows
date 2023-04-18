@@ -41,20 +41,25 @@ jobs:
         if: inputs.dependency-management == 'poetry'
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          poetry config virtualenvs.create false
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
           poetry add coverage flake8 pytest tox
           poetry install
       - name: Lint with flake8
         run: |
+          source .venv/bin/activate
           flake8 .
       - name: Test with pytest
         if: inputs.use_tox == 'n'
         run: |
+          source .venv/bin/activate
           coverage run -m pytest
           coverage xml
       - name: Test with tox
         if: inputs.use_tox == 'y'
-        run: tox -e py
+        run: |
+          source .venv/bin/activate
+          tox -e py
       - name: SonarCloud Scan
         if: inputs.use_sonarcloud == 'y'
         uses: SonarSource/sonarcloud-github-action@master
