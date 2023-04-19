@@ -88,11 +88,11 @@ jobs:
       - name: Short SHA
         if: inputs.push-image
         run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)-${{inputs.environment}}" >> $GITHUB_ENV
 
       - name: Generate Image Tags
         # Do not overwrite tags if set already from input
-        if: inputs.push-image && inputs.tags != 'prod'
+        if: inputs.push-image 
         # We're pushing an image and no tags supplied, so create defaults
         run: |
           echo "${{env.IMAGE_TAGS}}<<EOF" >> $GITHUB_ENV
