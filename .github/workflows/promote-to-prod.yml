@@ -49,6 +49,11 @@ jobs:
             CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
           fi
           cp "${CHART_VALUES_PATH}/image-dev.yaml" "${CHART_VALUES_PATH}/image-prod.yaml"
+
+          if [[ ${{inputs.runs-as}} == "frontend" ]]; then
+            prodtag=$(grep -A3 'tag:' image-dev.yaml | tail -n1 | awk '{ print $2}' |  sed "s/dev/prod/")
+            sed -i "" "/^\([[:space:]]*tag: \).*/s//\1$prodtag/" image-prod.yaml
+          fi
       - name: create pr
         env:
           GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
