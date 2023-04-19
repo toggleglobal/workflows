@@ -150,37 +150,37 @@ jobs:
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
 
-      # - name: Checkout Chart
-      #   if: inputs.push-image && !inputs.skip-deploy
-      #   uses: actions/checkout@v3
-      #   with:
-      #     repository: "toggleglobal/apps-infrastructure"
-      #     token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-      #     path: apps-infrastructure
+      - name: Checkout Chart
+        if: inputs.push-image && !inputs.skip-deploy
+        uses: actions/checkout@v3
+        with:
+          repository: "toggleglobal/apps-infrastructure"
+          token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+          path: apps-infrastructure
 
-      # - name: Setup git
-      #   if: inputs.push-image && !inputs.skip-deploy
-      #   run: |
-      #     git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
-      #     git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
+      - name: Setup git
+        if: inputs.push-image && !inputs.skip-deploy
+        run: |
+          git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
+          git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
 
-      # - name: Update image tag
-      #   if: inputs.push-image && !inputs.skip-deploy
-      #   run: |
-      #     cd apps-infrastructure
-      #     CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
-      #     printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
+      - name: Update image tag
+        if: inputs.push-image && !inputs.skip-deploy
+        run: |
+          cd apps-infrastructure
+          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
+          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
 
-      # - name: Commit new image
-      #   if: inputs.push-image && !inputs.skip-deploy
-      #   run: |
-      #     cd apps-infrastructure
-      #     git add .
-      #     if git status | grep -q "Changes to be committed"
-      #     then
-      #       git commit --message "Update dev image ${{ github.event.repository.name }}"
-      #       echo "Pushing git commit"
-      #       git push -u origin main
-      #     else
-      #       echo "No changes detected"
-      #     f
+      - name: Commit new image
+        if: inputs.push-image && !inputs.skip-deploy
+        run: |
+          cd apps-infrastructure
+          git add .
+          if git status | grep -q "Changes to be committed"
+          then
+            git commit --message "Update dev image ${{ github.event.repository.name }}"
+            echo "Pushing git commit"
+            git push -u origin main
+          else
+            echo "No changes detected"
+          f
