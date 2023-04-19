@@ -6,17 +6,18 @@ on:
         required: true
         type: string
       dependency-management:
-        description: Do you use pip or poetry to install dependencies, choose 'pip' or 'poetry'
+        description: Select 'pip' or 'poetry' to install dependencies
         required: true
         type: string
-      use_tox:
-        description: Do you use tox to test, choose 'y' or 'n'. if 'y', please create tox.ini in root folder
+      tox_test:
+        description: Set to true if using `tox` for testing (requires tox.ini in root dir)
         required: true
-        type: string
-      use_sonarcloud:
-        description: Do you use sonarcloud, choose 'y' or 'n'.
+        type: boolean
+      sonar_analysis:
+        description: Set to true if sonarcloud analysis is required.
         required: true
-        type: string
+        type: boolean
+
 jobs:
   build:
     name: Test
@@ -42,14 +43,14 @@ jobs:
           ssh-add - <<< "${{ secrets.PYTHON_PRIVATE_REPO_KEY }}"
           git config --global url."git@github.com:toggleglobal".insteadOf https://github.com/toggleglobal
 
-      - name: Install dependencies (Pip)
+      - name: Dependencies - Pip
         if: inputs.dependency-management == 'pip'
         run: |
           python -m pip install --upgrade pip
           pip install coverage flake8 pytest tox
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Install dependencies (Poetry)
+      - name: Dependencies - Poetry
         if: inputs.dependency-management == 'poetry'
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
@@ -58,23 +59,26 @@ jobs:
           poetry add coverage flake8 pytest tox
           poetry install
 
-      - name: Lint with flake8
+      - name: Lint
         run: |
           source .venv/bin/activate
           flake8 .
-      - name: Test with pytest
-        if: inputs.use_tox == 'n'
+
+      - name: Test - pytest
+        if: ${{ !inputs.tox_test }}
         run: |
           source .venv/bin/activate
           coverage run -m pytest
           coverage xml
-      - name: Test with tox
-        if: inputs.use_tox == 'y'
+
+      - name: Test - tox
+        if: ${{ inputs.tox_test }}
         run: |
           source .venv/bin/activate
           tox -e py
+
       - name: SonarCloud Scan
-        if: inputs.use_sonarcloud == 'y'
+        if: inputs.sonar_analysis
         uses: SonarSource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
