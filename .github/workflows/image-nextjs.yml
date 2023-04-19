@@ -53,7 +53,7 @@ on:
         type: string
       environment:
         description: Flag to distinguish env
-        required: false
+        required: true
         type: string
 
 
@@ -86,20 +86,25 @@ jobs:
           ref: main
 
       - name: Short SHA
-        if: inputs.push-image
+        if: inputs.push-image && env.IMAGE_TAGS == ''
         run: |
           echo "SHORT_SHA=$(git rev-parse --short HEAD)-${{inputs.environment}}" >> $GITHUB_ENV
 
+      - name: Repository Suffix
+        # Prepend hyphen if set
+        if: env.REPOSITORY_SUFFIX != ''
+        run: |
+          echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
+
       - name: Generate Image Tags
         # Do not overwrite tags if set already from input
-        if: inputs.push-image 
+        if: inputs.push-image && env.IMAGE_TAGS == ''
         # We're pushing an image and no tags supplied, so create defaults
         run: |
-          echo "${{env.IMAGE_TAGS}}<<EOF" >> $GITHUB_ENV
-          echo "${{github.repository}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
-          echo "${{github.repository}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
+          echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
+          echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
+          echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-          echo $GITHUB_ENV
 
       - name: Setup SSH
         run: |
