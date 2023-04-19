@@ -133,6 +133,7 @@ jobs:
             NEXT_PUBLIC_COOKIE_PRO=${{  env.NEXT_PUBLIC_COOKIE_PRO }}
             NEXT_PUBLIC_EARNINGS_URL=${{  env.NEXT_PUBLIC_EARNINGS_URL }}
             NEXT_PUBLIC_API_PATH=${{ env.NEXT_PUBLIC_API_PATH }}
+            NEXT_VERSION=${{env.SHORT_SHA}}
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
 
