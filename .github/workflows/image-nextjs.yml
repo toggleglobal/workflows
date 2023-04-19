@@ -92,7 +92,7 @@ jobs:
 
       - name: Generate Image Tags
         # Do not overwrite tags if set already from input
-        if: inputs.push-image && inputs.tags != prod
+        if: inputs.push-image && inputs.tags != 'prod'
         # We're pushing an image and no tags supplied, so create defaults
         run: |
           echo "${{env.IMAGE_TAGS}}<<EOF" >> $GITHUB_ENV
