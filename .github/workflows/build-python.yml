@@ -21,6 +21,8 @@ jobs:
   build:
     name: Test
     runs-on: ubuntu-latest
+    env:
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
     strategy:
       matrix:
         python: ${{ fromJson(inputs.python-versions) }}
@@ -31,12 +33,22 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
+
+      - name: Setup SSH and git
+        run: |
+          mkdir -p -m 0700 "$HOME/.ssh"
+          ssh-keyscan -H github.com >> $HOME/.ssh/known_hosts
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.PYTHON_PRIVATE_REPO_KEY }}"
+          git config --global url."git@github.com:toggleglobal".insteadOf https://github.com/toggleglobal
+
       - name: Install dependencies (Pip)
         if: inputs.dependency-management == 'pip'
         run: |
           python -m pip install --upgrade pip
           pip install coverage flake8 pytest tox
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
       - name: Install dependencies (Poetry)
         if: inputs.dependency-management == 'poetry'
         run: |
@@ -45,8 +57,7 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry add coverage flake8 pytest tox
           poetry install
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Lint with flake8
         run: |
           source .venv/bin/activate
