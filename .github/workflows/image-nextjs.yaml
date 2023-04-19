@@ -1,0 +1,178 @@
+on:
+  workflow_call:
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+      DEPLOYER_EMAIL:
+        required: true
+      DEPLOYER_USERNAME:
+        required: true
+      DEPLOYER_GITHUB_TOKEN:
+        required: true
+      SENTRY_AUTH_TOKEN:
+        required: true
+      SIB_KEY:
+        required: true
+
+    inputs:
+      push-image:
+        description: Pushes built image to dockerhub when set to true.
+        required: false
+        type: boolean
+        default: false
+      skip-deploy:
+        description: Prevents modifications to apps-infrastructure when set to true. Primarily for testing.
+        required: false
+        type: boolean
+        default: false
+      dockerfile:
+        description: Path to the Dockerfile
+        required: true
+        type: string
+      tags:
+        description: List of tags for the image (must be all lowercase). These will override the default tags.
+        required: false
+        type: string
+      next-public-ga:
+        description: Next public ga
+        required: true
+        type: string
+      next-public-naver:
+        description: Next public naver
+        required: true
+        type: string
+      next-public-domain:
+        description: Next public domain
+        required: true
+        type: string
+      next-public-cookie-pro:
+        description: Next public cookie pro
+        required: true
+        type: string
+      environment:
+        description: Flag to distinguish env
+        required: true
+        type: string
+
+
+
+jobs:
+  build-image:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      IMAGE_TAGS: ${{ inputs.tags }}
+      SENTRY_AUTH_TOKEN: ${{  secrets.SENTRY_AUTH_TOKEN }}
+      SIB_KEY: ${{ secrets.SIB_KEY }}
+      NEXT_PUBLIC_GA: ${{ inputs.NEXT_PUBLIC_GA }}
+      NEXT_PUBLIC_NAVER: ${{  inputs.NEXT_PUBLIC_NAVER }}
+      NEXT_PUBLIC_API_PATH: ${{ inputs.NEXT_PUBLIC_API_PATH }}
+      NEXT_PUBLIC_COOKIE_PRO: ${{ inputs.NEXT_PUBLIC_COOKIE_PRO }}
+      NEXT_PUBLIC_EARNINGS_URL: ${{ inputs.NEXT_PUBLIC_EARNINGS_URL }}
+      NEXT_PUBLIC_DOMAIN: ${{ inputs.NEXT_PUBLIC_DOMAIN }}  
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Checkout Config
+        # Checkout workflow repo to gain access to config files
+        uses: actions/checkout@v3
+        with:
+          repository: toggleglobal/workflows
+          path: './tmp'
+          ref: main
+
+      - name: Short SHA
+        if: inputs.push-image && env.IMAGE_TAGS == ''
+        run: |
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)-${{inputs.environment}}" >> $GITHUB_ENV
+      - name: Repository Suffix
+        # Prepend hyphen if set
+        if: env.REPOSITORY_SUFFIX != ''
+        run: |
+          echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
+      - name: Generate Image Tags
+        # Do not overwrite tags if set already from input
+        if: inputs.push-image && env.IMAGE_TAGS == ''
+        # We're pushing an image and no tags supplied, so create defaults
+        run: |
+          echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
+          echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
+          echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - name: Setup SSH
+        run: |
+          mkdir -p -m 0700 "$HOME/.ssh"
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.GO_PRIVATE_REPO_KEY }}"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          install: true
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Info
+        run: |
+          echo "Push Image: ${{inputs.push-image}}"
+          echo "Tags: ${{env.IMAGE_TAGS}}"
+      - name: Build image and push to Docker Hub
+        id: docker_build
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          tags: ${{ env.IMAGE_TAGS }}
+          push: ${{ inputs.push-image }}
+          ssh: default
+          build-args: |
+            SENTRY_AUTH_TOKEN=${{  env.SENTRY_AUTH_TOKEN }}
+            SIB_KEY=${{ env.SIB_KEY }}
+            NEXT_PUBLIC_GA=${{ env.NEXT_PUBLIC_GA }}
+            NEXT_PUBLIC_NAVER=${{  env.NEXT_PUBLIC_NAVER }}
+            NEXT_PUBLIC_DOMAIN=${{ env.NEXT_PUBLIC_DOMAIN }}
+            NEXT_PUBLIC_COOKIE_PRO=${{  env.NEXT_PUBLIC_COOKIE_PRO }}
+            NEXT_PUBLIC_EARNINGS_URL=${{  env.NEXT_PUBLIC_EARNINGS_URL }}
+            NEXT_PUBLIC_API_PATH=${{ env.NEXT_PUBLIC_API_PATH }}
+      - name: Image digest
+        run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
+
+      - name: Checkout Chart
+        if: inputs.push-image && !inputs.skip-deploy
+        uses: actions/checkout@v3
+        with:
+          repository: "toggleglobal/apps-infrastructure"
+          token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+          path: apps-infrastructure
+
+      - name: Setup git
+        if: inputs.push-image && !inputs.skip-deploy
+        run: |
+          git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
+          git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
+      - name: Update image tag
+        if: inputs.push-image && !inputs.skip-deploy
+        run: |
+          cd apps-infrastructure
+          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
+          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
+      - name: Commit new image
+        if: inputs.push-image && !inputs.skip-deploy
+        run: |
+          cd apps-infrastructure
+          git add .
+          if git status | grep -q "Changes to be committed"
+          then
+            git commit --message "Update dev image ${{ github.event.repository.name }}"
+            echo "Pushing git commit"
+            git push -u origin main
+          else
+            echo "No changes detected"
+          f
