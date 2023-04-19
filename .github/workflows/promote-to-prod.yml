@@ -41,6 +41,11 @@ jobs:
         run: |
           echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
       - name: update image tag prod
+        # This step simply copies image-dev.yaml to image-prod.yaml file for
+        # the specific chart, as the images used by dev and prod are the same.
+        # The exception is for frontend, whose image tags include an environment
+        # suffix (e.g. abcdef-dev), so those files need extra tweaking to update the
+        # tag suffix (e.g. abcdef-prod).
         run: |
           cd apps-infrastructure
           if [[ ${{inputs.runs-as}} == "cronjob" ]]; then

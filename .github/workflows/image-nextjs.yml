@@ -43,6 +43,10 @@ on:
         description: Next public domain
         required: true
         type: string
+      next-public-cookie-pro:
+        description: Next public cookie pro
+        required: true
+        type: string
       environment:
         description: Flag to distinguish env
         required: true
@@ -60,17 +64,10 @@ jobs:
       NEXT_PUBLIC_GA: ${{ inputs.next-public-ga }}
       NEXT_PUBLIC_NAVER: ${{  inputs.next-public-naver }}
       NEXT_PUBLIC_DOMAIN: ${{ inputs.next-public-domain }}  
+      NEXT_PUBLIC_COOKIE_PRO: ${{ inputs.next-public-cookie-pro }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-
-      - name: Checkout Config
-        # Checkout workflow repo to gain access to config files
-        uses: actions/checkout@v3
-        with:
-          repository: toggleglobal/workflows
-          path: './tmp'
-          ref: main
 
       - name: Short SHA
         if: inputs.push-image && env.IMAGE_TAGS == ''
@@ -123,6 +120,7 @@ jobs:
             NEXT_PUBLIC_GA=${{ env.NEXT_PUBLIC_GA }}
             NEXT_PUBLIC_NAVER=${{  env.NEXT_PUBLIC_NAVER }}
             NEXT_PUBLIC_DOMAIN=${{ env.NEXT_PUBLIC_DOMAIN }}
+            NEXT_PUBLIC_COOKIE_PRO= ${{ env.NEXT_PUBLIC_COOKIE_PRO }}
             NEXT_VERSION=${{env.SHORT_SHA}}
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
