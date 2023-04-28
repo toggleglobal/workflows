@@ -124,12 +124,12 @@ jobs:
           fi
       - id: required
         run: |
-          echo ::set-output name=services::'{${{env.SERVICES}}}'
+          echo services='{${{env.SERVICES}}}' >> $GITHUB_OUTPUT
 
       - name: display string
         run: |
-          echo "::notice ::Requires Postgres: ${{  inputs.requires-postgres }}"
-          echo "::notice ::Requires Cassandra: ${{  inputs.requires-cassandra }}"
+          echo "::notice ::Requires Postgres: ${{ inputs.requires-postgres }}"
+          echo "::notice ::Requires Cassandra: ${{ inputs.requires-cassandra }}"
           echo "::notice ::Requires Redis: ${{ inputs.requires-redis }}"
           echo "::notice ::Requires Vault: ${{ inputs.requires-vault }}"
           echo "::notice ::Requires ClickHouse: ${{ inputs.requires-clickhouse }}"
@@ -161,11 +161,11 @@ jobs:
       LOCALAZY_WRITE_KEY: ${{ secrets.LOCALAZY_WRITE_KEY }}
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Checkout Config
-      # Checkout workflow repo to gain access to config files
-      uses: actions/checkout@v2
+      # Checkout workflow repo to gain access to config file
+      uses: actions/checkout@v3
       with:
         repository: toggleglobal/workflows
         path: './tmp'
@@ -185,7 +185,7 @@ jobs:
         git config --global url."git@github.com:toggleglobal".insteadOf https://github.com/toggleglobal
 
     - name: Setup Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v4
       with:
         go-version: ${{ env.GOLANG_VERSION }}
         check-latest: false
