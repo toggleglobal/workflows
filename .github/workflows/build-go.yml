@@ -190,6 +190,18 @@ jobs:
         go-version: ${{ env.GOLANG_VERSION }}
         check-latest: false
 
+    - name: Install wire
+      run: go install github.com/google/wire/cmd/wire@v0.5.0
+
+    - name: Check Wire
+      run: |
+        find . -type f -name "wire.go" -execdir wire \;
+        if git status --porcelain | grep -q "wire_gen.go"
+        then
+          echo "wire_gen.go is out of date; run wire locally then push your branch again."
+          exit 1
+        fi
+
     - name: Verify dependencies
       run: go mod verify
 
