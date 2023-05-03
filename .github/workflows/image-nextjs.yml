@@ -48,8 +48,9 @@ on:
         required: true
         type: string
       environment:
-        description: Flag to distinguish env
+        description: The target environment to build and deploy image
         required: true
+        default: dev
         type: string
 
 
@@ -85,7 +86,6 @@ jobs:
         run: |
           echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
           echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
-          echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       - name: Setup SSH
         run: |
@@ -143,7 +143,7 @@ jobs:
         run: |
           cd apps-infrastructure
           CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
-          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
+          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-${{inputs.environment}}.yaml"
       - name: Commit new image
         if: inputs.push-image && !inputs.skip-deploy
         run: |
@@ -151,7 +151,7 @@ jobs:
           git add .
           if git status | grep -q "Changes to be committed"
           then
-            git commit --message "Update dev image ${{ github.event.repository.name }}"
+            git commit --message "Update ${{ inputs.environment }} env image ${{ github.event.repository.name }}"
             echo "Pushing git commit"
             git push -u origin main
           else
