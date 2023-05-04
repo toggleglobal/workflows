@@ -138,7 +138,6 @@ jobs:
         repository: "toggleglobal/workflows"
         token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
         path: workflows
-        ref: 'add-trivy-result-as-pr-comment'
 
     - name: Run Trivy Parser
       id: trivy-parser
