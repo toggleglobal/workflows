@@ -83,6 +83,7 @@ jobs:
     - name: Setup SSH
       run: |
         mkdir -p -m 0700 "$HOME/.ssh"
+        ssh-keyscan -H github.com >> $HOME/.ssh/known_hosts
         ssh-agent -a $SSH_AUTH_SOCK > /dev/null
         ssh-add - <<< "${{ secrets.PYTHON_PRIVATE_REPO_KEY }}"
 
