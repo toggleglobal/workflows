@@ -52,6 +52,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     env:
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       IMAGE_TAGS: ${{ inputs.tags }}
       PYTHON_VERSION: ${{ inputs.python-version }}
       REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
