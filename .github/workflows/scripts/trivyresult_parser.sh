@@ -7,21 +7,25 @@ then
 
     criticalFlag=false
 
-    vulnList=$(echo $trivyResults | jq '[.Results[0] | .Vulnerabilities[] | { CVE: .VulnerabilityID, PkgID: .PkgID, Severity: .Severity, URL: .PrimaryURL}]' )
+    checkResultsExist=$(echo $trivyResults | jq -r '.Results')
 
+    if [ "$checkResultsExist" != null ];
+    then
+        vulnList=$(echo $trivyResults | jq '[.Results[0] | .Vulnerabilities[] | { CVE: .VulnerabilityID, PkgID: .PkgID, Severity: .Severity, URL: .PrimaryURL}]' )
 
-    printf '%b\n' "Severity    | CVE     | URL       " >> formattedTrivy.txt
-    printf '%b\n' "------------|---------| --------- " >> formattedTrivy.txt
+        printf '%b\n' "Severity    | CVE     | URL       " >> formattedTrivy.txt
+        printf '%b\n' "------------|---------| --------- " >> formattedTrivy.txt
+        
+        for i in $(jq -c '.[]' <<< "$vulnList"); 
+        do 
+            if [ "$(jq -r '.Severity?' <<< "$i")" = "CRITICAL" ] ; then
+                criticalFlag=true
+            fi
+            printf '%b\n' "$(jq -j '.Severity," | ", .CVE, " | ",  .URL' <<< "$i")" >> formattedTrivy.txt
+        done 
 
-    for i in $(jq -c '.[]' <<< "$vulnList"); 
-    do 
-        if [ "$(jq -r '.Severity?' <<< "$i")" = "CRITICAL" ] ; then
-            criticalFlag=true
-        fi
-        printf '%b\n' "$(jq -j '.Severity," | ", .CVE, " | ",  .URL' <<< "$i")" >> formattedTrivy.txt
-    done 
-
-    cat formattedTrivy.txt
+        cat formattedTrivy.txt
+    fi
 
     if [ "$criticalFlag" == true ]; 
     then 
