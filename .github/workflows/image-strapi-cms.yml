@@ -49,7 +49,7 @@ jobs:
       - name: Short SHA
         if: inputs.push-image && env.IMAGE_TAGS == ''
         run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)-${{inputs.environment}}" >> $GITHUB_ENV
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: Repository Suffix
         # Prepend hyphen if set
         if: env.REPOSITORY_SUFFIX != ''
@@ -113,7 +113,7 @@ jobs:
         run: |
           cd apps-infrastructure
           CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
-          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-${{inputs.environment}}.yaml"
+          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
       - name: Commit new image
         if: inputs.push-image && !inputs.skip-deploy
         run: |
