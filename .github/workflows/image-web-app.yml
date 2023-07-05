@@ -37,7 +37,6 @@ on:
         default: dev
         type: string
 
-
 jobs:
   build-image:
     name: Build
@@ -46,6 +45,15 @@ jobs:
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       IMAGE_TAGS: ${{ inputs.tags }}
     steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: apps/webapp/dist
+
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: apps/webapp/dist
       - name: Checkout Repository
         uses: actions/checkout@v3
 
