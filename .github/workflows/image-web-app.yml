@@ -50,14 +50,15 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           commit: ${{github.event.pull_request.head.sha}}
+          github_token: ${{secrets.GITHUB_TOKEN}}
       # - uses: actions/checkout@v3
       # - uses: actions/download-artifact@v3
       #   with:
       #     name: dist
       #     path: apps/webapp/dist
 
-      # - name: Display structure of downloaded files
-      #   run: ls -R
+      - name: Display structure of downloaded files
+        run: ls -R
         # working-directory: apps/webapp/dist
       - name: Checkout Repository
         uses: actions/checkout@v3
