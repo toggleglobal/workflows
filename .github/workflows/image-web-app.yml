@@ -42,24 +42,13 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     env:
-      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       IMAGE_TAGS: ${{ inputs.tags }}
     steps:
-      - name: Download artifact
-        id: download-artifact
-        uses: dawidd6/action-download-artifact@v2
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
         with:
-          commit: ${{github.event.pull_request.head.sha}}
-          github_token: ${{secrets.GITHUB_TOKEN}}
-      # - uses: actions/checkout@v3
-      # - uses: actions/download-artifact@v3
-      #   with:
-      #     name: dist
-      #     path: apps/webapp/dist
-
-      - name: Display structure of downloaded files
-        run: ls -R
-        # working-directory: apps/webapp/dist
+          name: artifact
+          path: ~/
       - name: Checkout Repository
         uses: actions/checkout@v3
 
@@ -75,11 +64,6 @@ jobs:
           echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
           echo "${{github.repository}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-      - name: Setup SSH
-        run: |
-          mkdir -p -m 0700 "$HOME/.ssh"
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.GO_PRIVATE_REPO_KEY }}"
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         with:
@@ -99,7 +83,7 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: /home/runner/
           file: ${{ inputs.dockerfile }}
           tags: ${{ env.IMAGE_TAGS }}
           push: ${{ inputs.push-image }}
