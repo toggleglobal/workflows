@@ -86,7 +86,7 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v3
         with:
-          context: /home/runner/
+          context: .
           file: ${{ inputs.dockerfile }}
           tags: ${{ env.IMAGE_TAGS }}
           push: ${{ inputs.push-image }}
