@@ -39,7 +39,7 @@ on:
       project-name:
         description: The name of the project to deploy build to
         required: true
-        default: dev
+        default: web-app
         type: string
 
 jobs:
@@ -116,7 +116,7 @@ jobs:
         if: inputs.push-image && !inputs.skip-deploy
         run: |
           cd apps-infrastructure
-          CHART_VALUES_PATH="./charts/${{ input.project-name }}/values"
+          CHART_VALUES_PATH="./charts/${{ inputs.project-name }}/values"
           printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-${{inputs.environment}}.yaml"
       - name: Commit new image
         if: inputs.push-image && !inputs.skip-deploy
@@ -126,15 +126,15 @@ jobs:
           if git status | grep -q "Changes to be committed"
           then
             if [[ ${{inputs.environment}} == "prod" ]]; then
-              BRANCH_NAME="${{ input.project-name }}-${GITHUB_RUN_ID}"
+              BRANCH_NAME="${{ inputs.project-name }}-${GITHUB_RUN_ID}"
               git checkout -b ${BRANCH_NAME}
-              git commit --message "Promote to ${{ inputs.environment }} from ${{ input.project-name }}"
+              git commit --message "Promote to ${{ inputs.environment }} from ${{ inputs.project-name }}"
               echo "Pushing git commit"
               git push -u origin ${BRANCH_NAME}
               echo "Creating a pull request"
-              gh pr create -t "Promote to ${{ inputs.environment }} ${{ input.project-name }}" -B "main" -b "Promote to production ${{ input.project-name }}" -H ${BRANCH_NAME}
+              gh pr create -t "Promote to ${{ inputs.environment }} ${{ inputs.project-name }}" -B "main" -b "Promote to production ${{ inputs.project-name }}" -H ${BRANCH_NAME}
             else
-              git commit --message "Update ${{ inputs.environment }} env image ${{ input.project-name }}"
+              git commit --message "Update ${{ inputs.environment }} env image ${{ inputs.project-name }}"
               echo "Pushing git commit"
               git push -u origin main
             fi
