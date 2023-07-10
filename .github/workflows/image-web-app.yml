@@ -53,7 +53,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
-          name: artifact-${{ github.sha }}
+          name: artifact-${{ inputs.project-name }}-${{ github.sha }}
           path: ~/
       - name: Short SHA
         if: inputs.push-image && env.IMAGE_TAGS == ''
