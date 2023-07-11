@@ -125,7 +125,9 @@ jobs:
           git add .
           if git status | grep -q "Changes to be committed"
           then
-            if [[ ${{inputs.environment}} == "prod" ]]; then
+            if [[ ${{inputs.environment}} == "prod" ]] &&
+               [[ ${{inputs.project-name}} == "web-app" ||
+                  ${{inputs.project-name}} == "web-earnings" ]]; then
               BRANCH_NAME="${{ inputs.project-name }}-${GITHUB_RUN_ID}"
               git checkout -b ${BRANCH_NAME}
               git commit --message "Promote to ${{ inputs.environment }} from ${{ inputs.project-name }}"
