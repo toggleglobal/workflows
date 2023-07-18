@@ -138,6 +138,8 @@ jobs:
           CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
           printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-${{inputs.environment}}.yaml"
       - name: Commit new image
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
         if: inputs.push-image && !inputs.skip-deploy
         run: |
           cd apps-infrastructure

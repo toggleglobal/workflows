@@ -122,6 +122,8 @@ jobs:
         with:
           cmd: yq -i '.common.image.tag = strenv(env.SHORT_SHA)' ./apps-infrastructure/charts/wui-jpm/values.yaml
       - name: Commit new image
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
         if: inputs.push-image && !inputs.skip-deploy
         run: |
           cd apps-infrastructure
