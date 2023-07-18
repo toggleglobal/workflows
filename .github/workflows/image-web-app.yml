@@ -119,9 +119,8 @@ jobs:
       - name: Update JPM image tag
         if: inputs.push-image && !inputs.skip-deploy && inputs.environment == "prod"
         uses: mikefarah/yq@master
-        run: cd apps-infrastructure
         with:
-          cmd: yq -i '.common.image.tag = strenv(env.SHORT_SHA)' ./charts/wui-jpm/values.yaml
+          cmd: yq -i '.common.image.tag = strenv(env.SHORT_SHA)' ./apps-infrastructure/charts/wui-jpm/values.yaml
       - name: Commit new image
         if: inputs.push-image && !inputs.skip-deploy
         run: |
