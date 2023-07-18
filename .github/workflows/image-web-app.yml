@@ -116,6 +116,12 @@ jobs:
           cd apps-infrastructure
           CHART_VALUES_PATH="./charts/${{ inputs.project-name }}/values"
           printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-${{inputs.environment}}.yaml"
+      - name: Update JPM image tag
+        if: inputs.push-image && !inputs.skip-deploy && inputs.environment == "prod"
+        uses: mikefarah/yq@master
+        run: cd apps-infrastructure
+        with:
+          cmd: yq -i '.common.image.tag = strenv(env.SHORT_SHA)' ./charts/wui-jpm/values.yaml
       - name: Commit new image
         if: inputs.push-image && !inputs.skip-deploy
         run: |
