@@ -52,14 +52,6 @@ on:
         required: true
         default: dev
         type: string
-      website-localazy-read-key:
-        description: localazy read key
-        required: true
-        type: string
-      website-localazy-write-key:
-        description: localazy write key
-        required: true
-        type: string
 
 jobs:
   build-image:
@@ -72,8 +64,6 @@ jobs:
       NEXT_PUBLIC_NAVER: ${{  inputs.next-public-naver }}
       NEXT_PUBLIC_DOMAIN: ${{ inputs.next-public-domain }}
       NEXT_PUBLIC_COOKIE_PRO: ${{ inputs.next-public-cookie-pro }}
-      WEB_SITE_LOCALAZY_READ_KEY: ${{ inputs.website-localazy-read-key }}
-      WEB_SITE_LOCALAZY_WRITE_KEY: ${{ inputs.website-localazy-write-key}}
 
     steps:
       - name: Checkout Repository
@@ -125,8 +115,8 @@ jobs:
             NEXT_PUBLIC_NAVER=${{  env.NEXT_PUBLIC_NAVER }}
             NEXT_PUBLIC_DOMAIN=${{ env.NEXT_PUBLIC_DOMAIN }}
             NEXT_PUBLIC_COOKIE_PRO= ${{ env.NEXT_PUBLIC_COOKIE_PRO }}
-            WEB_SITE_LOCALAZY_READ_KEY: ${{ env.WEB_SITE_LOCALAZY_READ_KEY}}
-            WEB_SITE_LOCALAZY_WRITE_KEY: ${{ env.WEB_SITE_LOCALAZY_WRITE_KEY}}
+            WEB_SITE_LOCALAZY_READ_KEY: ${{ secrets.WEB_SITE_LOCALAZY_READ_KEY}}
+            WEB_SITE_LOCALAZY_WRITE_KEY: ${{ secrets.WEB_SITE_LOCALAZY_WRITE_KEY}}
             NEXT_VERSION=${{env.SHORT_SHA}}
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
