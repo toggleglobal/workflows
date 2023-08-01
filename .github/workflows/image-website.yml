@@ -114,10 +114,10 @@ jobs:
             NEXT_PUBLIC_GA=${{ env.NEXT_PUBLIC_GA }}
             NEXT_PUBLIC_NAVER=${{  env.NEXT_PUBLIC_NAVER }}
             NEXT_PUBLIC_DOMAIN=${{ env.NEXT_PUBLIC_DOMAIN }}
-            NEXT_PUBLIC_COOKIE_PRO= ${{ env.NEXT_PUBLIC_COOKIE_PRO }}
-            WEB_SITE_LOCALAZY_READ_KEY: ${{ secrets.WEB_SITE_LOCALAZY_READ_KEY}}
-            WEB_SITE_LOCALAZY_WRITE_KEY: ${{ secrets.WEB_SITE_LOCALAZY_WRITE_KEY}}
-            NEXT_VERSION=${{env.SHORT_SHA}}
+            NEXT_PUBLIC_COOKIE_PRO=${{ env.NEXT_PUBLIC_COOKIE_PRO }}
+            WEB_SITE_LOCALAZY_READ_KEY=${{ secrets.WEB_SITE_LOCALAZY_READ_KEY }}
+            WEB_SITE_LOCALAZY_WRITE_KEY=${{ secrets.WEB_SITE_LOCALAZY_WRITE_KEY }}
+            NEXT_VERSION=${{ env.SHORT_SHA }}
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
 
