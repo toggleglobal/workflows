@@ -15,6 +15,10 @@ on:
         description: Path in static bucket, default should be shasum from next string template {service name}-{commit hash}-{env name}
         required: true
         type: string
+      source-image:
+        description: Source image
+        required: true
+        type: string
 
 jobs:
   static:
@@ -27,7 +31,7 @@ jobs:
         - uses: imjasonh/setup-crane@v0.1
         - name: Extract
           run: |
-            crane export ${{ inputs.image }} - | tar -xf - ${{ matrix.static-source-path }}
+            crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.static-source-path }}
         - name: Upload
           run: gsutil rsync -r .${{ matrix.static-source-path }} gs://$STATIC_BUCKET/${{ inputs.uniq-bucket-path }}/
           env:
