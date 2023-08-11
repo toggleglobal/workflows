@@ -7,9 +7,12 @@ on:
         type: string
 
 jobs:
+  shasum:
+    name: Generate shasum
+    runs-on: ubuntu-latest
   outputs:
     shasum: ${{ steps.shasum.outputs.SHASUM }}
-  shasum:
+  steps:
     - name: Generate shasum
       runs-on: ubuntu-latest
       steps:
