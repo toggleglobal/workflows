@@ -1,0 +1,18 @@
+on:
+  workflow_call:
+    inputs:
+      string:
+        description: The string we want to convert to shasum
+        required: true
+        type: string
+
+jobs:
+  outputs:
+    shasum: ${{ steps.shasum.outputs.SHASUM }}
+  shasum:
+    - name: Generate shasum
+      runs-on: ubuntu-latest
+      steps:
+        - name: Generate
+          run: |
+            echo "SHASUM=$(echo {{ inputs.string }} | sha1sum | awk '{print $1}')" >> "$GITHUB_OUTPUT"
