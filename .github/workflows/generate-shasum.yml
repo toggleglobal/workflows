@@ -11,8 +11,9 @@ jobs:
     name: Generate shasum
     runs-on: ubuntu-latest
     outputs:
-      shasum: ${{ steps.shasum.outputs.SHASUM }}
+      shasum: ${{ steps.generate-shasum.outputs.SHASUM }}
     steps:
       - name: Generate
+        id: generate-shasum
         run: |
           echo "SHASUM=$(echo {{ inputs.string }} | sha1sum | awk '{print $1}')" >> "$GITHUB_OUTPUT"
