@@ -24,17 +24,16 @@ on:
 
 jobs:
   static:
-    - name: Extract and upload
-      runs-on: google/cloud-sdk
-      strategy:
-        matrix:
-          static-source-path: "${{ fromJson(inputs.static-directories) }}"
-      steps:
-        - uses: imjasonh/setup-crane@v0.1
-        - name: Extract
-          run: |
-            crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.static-source-path }}
-        - name: Upload
-          run: gsutil rsync -r .${{ matrix.static-source-path }} gs://${{ intputs.static-bucket }}/${{ inputs.uniq-bucket-path }}/
-          env:
-            GOOGLE_CREDENTIALS: "${{ secrets[github.event.inputs.google-creds-env] }}"
+    runs-on: google/cloud-sdk
+    strategy:
+      matrix:
+        static-source-path: "${{ fromJson(inputs.static-directories) }}"
+    steps:
+      - uses: imjasonh/setup-crane@v0.1
+      - name: Extract
+        run: |
+          crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.static-source-path }}
+      - name: Upload
+        run: gsutil rsync -r .${{ matrix.static-source-path }} gs://${{ intputs.static-bucket }}/${{ inputs.uniq-bucket-path }}/
+        env:
+          GOOGLE_CREDENTIALS: "${{ secrets[github.event.inputs.google-creds-env] }}"
