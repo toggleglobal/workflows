@@ -24,7 +24,7 @@ on:
 
 jobs:
   static:
-    runs-on: google/cloud-sdk
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         static-source-path: "${{ fromJson(inputs.static-directories) }}"
