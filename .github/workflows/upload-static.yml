@@ -1,11 +1,5 @@
 on:
   workflow_call:
-    secrets:
-      GOOGLE_CREDENTIALS:
-        required: true
-      STATIC_BUCKET:
-        required: true
-
     inputs:
       static-directories:
         description: Static directories to upload
@@ -17,6 +11,14 @@ on:
         type: string
       source-image:
         description: Source image
+        required: true
+        type: string
+      static-bucket:
+        description:  Bucket to upload
+        required: true
+        type: string
+      google-creds-env:
+        description:  name of the gcp credentials env
         required: true
         type: string
 
@@ -33,7 +35,6 @@ jobs:
           run: |
             crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.static-source-path }}
         - name: Upload
-          run: gsutil rsync -r .${{ matrix.static-source-path }} gs://$STATIC_BUCKET/${{ inputs.uniq-bucket-path }}/
+          run: gsutil rsync -r .${{ matrix.static-source-path }} gs://${{ intputs.static-bucket }}/${{ inputs.uniq-bucket-path }}/
           env:
-            GOOGLE_CREDENTIALS: "${{ secrets.GOOGLE_CREDENTIALS }}"
-            STATIC_BUCKET: "${{ secrets.STATIC_BUCKET }}"
+            GOOGLE_CREDENTIALS: "${{ secrets[github.event.inputs.google-creds-env] }}"
