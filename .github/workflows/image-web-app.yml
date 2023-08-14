@@ -70,7 +70,7 @@ jobs:
           echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
           echo "${{github.repository_owner}}/${{inputs.project-name}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-          echo "IMAGE_TAG=${{github.repository_owner}}/${{inputs.project-name}}:${{env.SHORT_SHA}}" >> "$GITHUB_OUTPUT"
+          echo "IMAGE_TAG=${{github.repository_owner}}/${{inputs.project-name}}:${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
       - name: Setup SSH
         run: |
           mkdir -p -m 0700 "$HOME/.ssh"
