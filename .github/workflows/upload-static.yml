@@ -35,20 +35,20 @@ jobs:
         static-source-path: "${{ fromJson(inputs.static-directories) }}"
     steps:
       - uses: imjasonh/setup-crane@v0.1
-      - name: Login to DockerHub
+      - name: 'Login to DockerHub'
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Extract
+      - name: 'Extract static files'
         run: |
           crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.static-source-path }}
-      - name: Upload
+      - name: 'Auth in GCP'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: "${{ secrets[inputs.google-creds-env] }}"
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+      - name: 'Upload to static bucket'
         run: |
-          gcloud info
-          echo "Creds!"
-          echo $GOOGLE_CREDENTIALS
-          echo "Creds!"
           gsutil rsync -r ./${{ matrix.static-source-path }} gs://${{ inputs.static-bucket }}/${{ inputs.unique-path }}/
-        env:
-          GOOGLE_CREDENTIALS: "${{ secrets[inputs.google-creds-env] }}"
