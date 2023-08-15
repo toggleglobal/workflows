@@ -44,6 +44,6 @@ jobs:
         run: |
           crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.static-source-path }}
       - name: Upload
-        run: gsutil rsync -r .${{ matrix.static-source-path }} gs://${{ inputs.static-bucket }}/${{ inputs.uniq-bucket-path }}/
+        run: gsutil rsync -r ./${{ matrix.static-source-path }} gs://${{ inputs.static-bucket }}/${{ inputs.uniq-bucket-path }}/
         env:
           GOOGLE_CREDENTIALS: "${{ secrets[github.event.inputs.google-creds-env] }}"
