@@ -5,6 +5,10 @@ on:
         description: The string we want to convert to shasum
         required: true
         type: string
+    outputs:
+      image-tag:
+        description: "Image tag"
+        value: ${{ jobs.shasum.outputs.shasum }}
 
 jobs:
   shasum:
