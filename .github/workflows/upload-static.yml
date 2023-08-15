@@ -8,7 +8,6 @@ on:
     inputs:
       static-directories:
         description: Static directories to upload
-        default: "[]"
         type: string
       unique-path:
         description: Path in static bucket, default should be shasum from next string template {service name}-{commit hash}-{env name}
@@ -51,4 +50,4 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v1'
       - name: 'Upload to static bucket'
         run: |
-          gsutil rsync -r ./${{ matrix.static-source-path }} gs://${{ inputs.static-bucket }}/${{ inputs.unique-path }}/
+          gsutil rsync -r ./${{ matrix.static-source-path }} gs://${{ inputs.static-bucket }}/${{ inputs.unique-path }}/$(basename ${{ matrix.static-source-path }})/
