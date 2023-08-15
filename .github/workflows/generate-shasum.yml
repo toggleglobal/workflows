@@ -7,7 +7,6 @@ on:
         type: string
     outputs:
       shasum:
-        description: "Image tag"
         value: ${{ jobs.shasum.outputs.shasum }}
 
 jobs:
