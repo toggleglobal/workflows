@@ -6,7 +6,7 @@ on:
         required: true
         type: string
     outputs:
-      image-tag:
+      shasum:
         description: "Image tag"
         value: ${{ jobs.shasum.outputs.shasum }}
 
