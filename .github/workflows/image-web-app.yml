@@ -11,7 +11,6 @@ on:
         required: true
       DEPLOYER_GITHUB_TOKEN:
         required: true
-
     inputs:
       push-image:
         description: Pushes built image to dockerhub when set to true.
@@ -41,10 +40,8 @@ on:
         required: true
         default: web-app
         type: string
-
     outputs:
       image-tag:
-        description: "Image tag"
         value: ${{ jobs.build-image.outputs.image-tag }}
 
 jobs:
