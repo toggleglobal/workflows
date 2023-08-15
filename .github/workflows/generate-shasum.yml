@@ -16,7 +16,6 @@ jobs:
     outputs:
       shasum: ${{ steps.generate-shasum.outputs.SHASUM }}
     steps:
-      - name: Generate
-        id: generate-shasum
+      - id: generate-shasum
         run: |
           echo "SHASUM=$(echo {{ inputs.string }} | sha1sum | awk '{print $1}')" >> "$GITHUB_OUTPUT"
