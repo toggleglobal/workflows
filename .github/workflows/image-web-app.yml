@@ -61,8 +61,7 @@ jobs:
         if: inputs.push-image && env.IMAGE_TAGS == ''
         run: |
           echo "SHORT_SHA=$(git rev-parse --short HEAD)-${{inputs.environment}}" >> $GITHUB_ENV
-      - name: Generate Image Tags
-        id: generate-image-tags
+      - id: generate-image-tags
         # Do not overwrite tags if set already from input
         if: inputs.push-image && env.IMAGE_TAGS == ''
         # We're pushing an image and no tags supplied, so create defaults
@@ -71,6 +70,7 @@ jobs:
           echo "${{github.repository_owner}}/${{inputs.project-name}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
           echo "IMAGE_TAG=${{github.repository_owner}}/${{inputs.project-name}}:${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
+          echo $GITHUB_OUTPUT
       - name: Setup SSH
         run: |
           mkdir -p -m 0700 "$HOME/.ssh"
