@@ -42,6 +42,11 @@ on:
         default: web-app
         type: string
 
+    outputs:
+      image-tag:
+        description: "Image tag"
+        value: ${{ jobs.build-image.outputs.image-tag }}
+
 jobs:
   build-image:
     name: Build
