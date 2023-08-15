@@ -1,5 +1,10 @@
 on:
   workflow_call:
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
     inputs:
       static-directories:
         description: Static directories to upload
