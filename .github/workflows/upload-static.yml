@@ -46,7 +46,9 @@ jobs:
       - name: Upload
         run: |
           gcloud info
+          echo "Creds!"
           echo $GOOGLE_CREDENTIALS
+          echo "Creds!"
           gsutil rsync -r ./${{ matrix.static-source-path }} gs://${{ inputs.static-bucket }}/${{ inputs.unique-path }}/
         env:
           GOOGLE_CREDENTIALS: "${{ secrets[inputs.google-creds-env] }}"
