@@ -40,6 +40,10 @@ on:
         required: true
         default: web-app
         type: string
+      cdn-path:
+        description: Path where stored static files in CDN
+        default: web-app
+        type: string
     outputs:
       image-tag:
         value: ${{ jobs.build-image.outputs.image-tag }}
@@ -99,6 +103,8 @@ jobs:
           tags: ${{ env.IMAGE_TAGS }}
           push: ${{ inputs.push-image }}
           ssh: default
+        build-args: |
+          CDN_PATH=${{ inputs.cdn-path }}
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
 
