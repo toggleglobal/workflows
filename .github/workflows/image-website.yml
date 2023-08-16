@@ -51,6 +51,10 @@ on:
         required: true
         default: dev
         type: string
+      cdn-path:
+        description: Path where stored static files in CDN
+        default: website
+        type: string
     outputs:
       image-tag:
         value: ${{ jobs.build-image.outputs.image-tag }}
@@ -119,6 +123,7 @@ jobs:
             WEB_SITE_LOCALAZY_READ_KEY=${{ secrets.WEB_SITE_LOCALAZY_READ_KEY }}
             WEB_SITE_LOCALAZY_WRITE_KEY=${{ secrets.WEB_SITE_LOCALAZY_WRITE_KEY }}
             NEXT_VERSION=${{ env.SHORT_SHA }}
+            CDN_PATH=${{ inputs.cdn-path }}
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
       - name: Run Trivy vulnerability scanner
