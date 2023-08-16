@@ -103,8 +103,8 @@ jobs:
           tags: ${{ env.IMAGE_TAGS }}
           push: ${{ inputs.push-image }}
           ssh: default
-        build-args: |
-          CDN_PATH=${{ inputs.cdn-path }}
+          build-args: |
+            CDN_PATH=${{ inputs.cdn-path }}
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
 
