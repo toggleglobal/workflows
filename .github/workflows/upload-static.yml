@@ -1,0 +1,53 @@
+on:
+  workflow_call:
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+    inputs:
+      static-directories:
+        description: Static directories to upload
+        type: string
+      unique-path:
+        description: Path in static bucket, default should be shasum from next string template {service name}-{commit hash}-{env name}
+        required: true
+        type: string
+      source-image:
+        description: Source image
+        required: true
+        type: string
+      static-bucket:
+        description:  Bucket to upload
+        required: true
+        type: string
+      google-creds-env:
+        description:  name of the gcp credentials env
+        required: true
+        type: string
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        static-source-path: "${{ fromJson(inputs.static-directories) }}"
+    steps:
+      - uses: imjasonh/setup-crane@v0.1
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Extract static files
+        run: |
+          crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.static-source-path }}
+      - name: Auth in GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: "${{ secrets[inputs.google-creds-env] }}"
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      - name: Upload to static bucket
+        run: |
+          gsutil rsync -r ./${{ matrix.static-source-path }} gs://${{ inputs.static-bucket }}/${{ inputs.unique-path }}/$(basename ${{ matrix.static-source-path }})/

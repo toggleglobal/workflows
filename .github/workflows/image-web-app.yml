@@ -11,7 +11,6 @@ on:
         required: true
       DEPLOYER_GITHUB_TOKEN:
         required: true
-
     inputs:
       push-image:
         description: Pushes built image to dockerhub when set to true.
@@ -41,6 +40,9 @@ on:
         required: true
         default: web-app
         type: string
+    outputs:
+      image-tag:
+        value: ${{ jobs.build-image.outputs.image-tag }}
 
 jobs:
   build-image:
@@ -49,6 +51,8 @@ jobs:
     env:
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       IMAGE_TAGS: ${{ inputs.tags }}
+    outputs:
+      image-tag: ${{ steps.generate-image-tags.outputs.IMAGE_TAG }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
@@ -67,6 +71,7 @@ jobs:
           echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
           echo "${{github.repository_owner}}/${{inputs.project-name}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{github.repository_owner}}/${{inputs.project-name}}:${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
       - name: Setup SSH
         run: |
           mkdir -p -m 0700 "$HOME/.ssh"
