@@ -59,10 +59,10 @@ jobs:
       image-tag: ${{ steps.generate-image-tags.outputs.IMAGE_TAG }}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: artifact-${{ inputs.project-name }}-${{inputs.environment}}-${{ github.sha }}
-          path: ~/
+#      - uses: actions/download-artifact@v3
+#        with:
+#          name: artifact-${{ inputs.project-name }}-${{inputs.environment}}-${{ github.sha }}
+#          path: ~/
       - name: Short SHA
         if: inputs.push-image && env.IMAGE_TAGS == ''
         run: |
