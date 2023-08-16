@@ -30,8 +30,7 @@ jobs:
   static:
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        static-source-path: "${{ fromJson(inputs.static-directories) }}"
+      matrix: "${{ fromJson(inputs.static-directories) }}"
     steps:
       - uses: imjasonh/setup-crane@v0.1
       - name: Login to DockerHub
@@ -41,7 +40,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Extract static files
         run: |
-          crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.static-source-path }}
+          crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.src }}
       - name: Auth in GCP
         uses: google-github-actions/auth@v1
         with:
@@ -50,4 +49,4 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
       - name: Upload to static bucket
         run: |
-          gsutil rsync -r ./${{ matrix.static-source-path }} gs://${{ inputs.static-bucket }}/${{ inputs.unique-path }}/$(basename ${{ matrix.static-source-path }})/
+          gsutil rsync -r ./${{ matrix.src }} gs://${{ inputs.static-bucket }}/${{ inputs.unique-path }}/${{ matrix.dst }}/
