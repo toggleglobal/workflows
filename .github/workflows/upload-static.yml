@@ -30,8 +30,7 @@ jobs:
   static:
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        static-source-path: "${{ fromJson(inputs.static-directories) }}"
+      matrix: "${{ fromJson(inputs.static-directories) }}"
     steps:
       - uses: imjasonh/setup-crane@v0.1
       - name: Login to DockerHub
