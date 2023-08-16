@@ -41,7 +41,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Extract static files
         run: |
-          crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.static-source-path }}
+          SOURCE_PATH=$(echo ${{ matrix.static-source-path }} | jq 'keys[]')
+          crane export ${{ inputs.source-image }} - | tar -xf - $SOURCE_PATH
       - name: Auth in GCP
         uses: google-github-actions/auth@v1
         with:
@@ -50,4 +51,6 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
       - name: Upload to static bucket
         run: |
-          gsutil rsync -r ./${{ matrix.static-source-path }} gs://${{ inputs.static-bucket }}/${{ inputs.unique-path }}/$(basename ${{ matrix.static-source-path }})/
+          SOURCE_PATH=$(echo ${{ matrix.static-source-path }} | jq 'keys[]')
+          DESTINATION_PATH=$(echo ${{ matrix.static-source-path }} | jq '.[]')
+          gsutil rsync -r ./$SOURCE_PATH gs://${{ inputs.static-bucket }}/${{ inputs.unique-path }}/$DESTINATION_PATH/
