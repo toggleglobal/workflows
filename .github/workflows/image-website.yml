@@ -79,7 +79,7 @@ jobs:
         if: inputs.push-image && env.IMAGE_TAGS == ''
         run: |
           echo "SHORT_SHA=$(git rev-parse --short HEAD)-${{inputs.environment}}" >> $GITHUB_ENV
-      - name: Generate Image Tags
+      - id: generate-image-tags
         # Do not overwrite tags if set already from input
         if: inputs.push-image && env.IMAGE_TAGS == ''
         # We're pushing an image and no tags supplied, so create defaults
