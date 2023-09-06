@@ -122,7 +122,7 @@ jobs:
             NEXT_PUBLIC_COOKIE_PRO=${{ env.NEXT_PUBLIC_COOKIE_PRO }}
             WEB_SITE_LOCALAZY_READ_KEY=${{ secrets.WEB_SITE_LOCALAZY_READ_KEY }}
             WEB_SITE_LOCALAZY_WRITE_KEY=${{ secrets.WEB_SITE_LOCALAZY_WRITE_KEY }}
-            NEXT_VERSION=${{ env.SHORT_SHA }}
+            NEXT_VERSION=${{ github.sha }}-${{ github.run_number }}
             CDN_PATH=${{ inputs.cdn-path }}
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
