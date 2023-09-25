@@ -5,7 +5,6 @@
     "features": ["content_as_object", "plural_object", "filter_untranslated"]
   },
   "download": {
-    "files": "locales/${fileWithoutExt}.${lang}.json",
-    "includeSourceLang": true
+    "files": "locales/${fileWithoutExt}.${lang}.json"
   }
 }
