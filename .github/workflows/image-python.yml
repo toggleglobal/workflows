@@ -52,6 +52,9 @@ on:
         default: service
         required: false
         type: string
+    outputs:
+      image-tag:
+        value: ${{ jobs.build-image.outputs.image-tag }}
 
 jobs:
   build-image:
@@ -62,6 +65,8 @@ jobs:
       IMAGE_TAGS: ${{ inputs.tags }}
       PYTHON_VERSION: ${{ inputs.python-version }}
       REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
+    outputs:
+      image-tag: ${{ steps.generate-image-tags.outputs.IMAGE_TAG }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -77,7 +82,7 @@ jobs:
       run: |
         echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
 
-    - name: Generate Image Tags
+    - id: generate-image-tags
       # Do not overwrite tags if set already from input
       if: inputs.push-image && env.IMAGE_TAGS == ''
       # We're pushing an image and no tags supplied, so create defaults
@@ -86,6 +91,7 @@ jobs:
         echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
         echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
         echo "EOF" >> $GITHUB_ENV
+        echo "IMAGE_TAG=${{github.repository}}:${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
 
     - name: Setup SSH
       run: |
