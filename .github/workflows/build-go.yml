@@ -202,6 +202,12 @@ jobs:
           exit 1
         fi
 
+    - name: Install goimports
+      run: go install golang.org/x/tools/cmd/goimports@latest
+
+    - name: Verify formatting
+      run: goimports -d -l .
+
     - name: Verify dependencies
       run: go mod verify
 
