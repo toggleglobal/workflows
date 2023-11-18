@@ -207,9 +207,15 @@ jobs:
 
     - name: Verify formatting
       run: |
-        ISSUES=$(goimports -d -l .)
-        if [ -n "$ISSUES" ]; then
-          echo $ISSUES
+        ISSUES=$(goimports -l .)
+        has_issues=false
+        while read -r issue; do
+          if ! [[ $issue =~ _gen.go$ ]]; then
+            echo "$issue"
+            has_issues=true
+          fi
+        done <<< "$ISSUES"
+        if [ "$has_issues" = true ]; then
           echo "One or more files appeared to be malformatted; run goimports locally then push your branch again."
           exit 1
         fi
