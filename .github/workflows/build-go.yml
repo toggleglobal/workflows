@@ -202,6 +202,26 @@ jobs:
           exit 1
         fi
 
+    - name: Install goimports
+      run: go install golang.org/x/tools/cmd/goimports@latest
+
+    - name: Verify formatting
+      run: |
+        ISSUES=$(goimports -l .)
+        has_issues=false
+        while read -r issue; do
+          if [[ -n "$issue" ]]; then
+            if [[ ! $issue =~ _(gen|enumer)\.go$ ]]; then
+              echo "$issue"
+              has_issues=true
+            fi
+          fi
+        done <<< "$ISSUES"
+        if [ "$has_issues" = true ]; then
+          echo "One or more files appeared to be malformatted; run goimports locally then push your branch again."
+          exit 1
+        fi
+
     - name: Verify dependencies
       run: go mod verify
 
