@@ -210,9 +210,11 @@ jobs:
         ISSUES=$(goimports -l .)
         has_issues=false
         while read -r issue; do
-          if ! [[ $issue =~ _gen.go$ ]]; then
-            echo "$issue"
-            has_issues=true
+          if [[ -n "$issue" ]]; then
+            if [[ ! $issue =~ _(gen|enumer)\.go$ ]]; then
+              echo "$issue"
+              has_issues=true
+            fi
           fi
         done <<< "$ISSUES"
         if [ "$has_issues" = true ]; then
