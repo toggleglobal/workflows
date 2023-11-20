@@ -211,7 +211,7 @@ jobs:
         has_issues=false
         while read -r issue; do
           if [[ -n "$issue" ]]; then
-            if [[ ! $issue =~ _(gen|enumer)\.go$ ]]; then
+            if [[ ! $issue =~ (_gen|_enumer|\.pb)\.go$ ]]; then
               echo "$issue"
               has_issues=true
             fi
