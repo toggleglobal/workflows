@@ -73,7 +73,7 @@ jobs:
       - id: generate-image-tags
         if: inputs.push-image
         run: |
-          IMAGE_TAG="$(git rev-parse --short HEAD)--${{ github.run_number }}-${{inputs.environment}}"
+          IMAGE_TAG="$(git rev-parse --short HEAD)-${{ github.run_number }}-${{inputs.environment}}"
           IMAGE="${{github.repository}}:$IMAGE_TAG"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
           echo "IMAGE=$IMAGE" >> $GITHUB_OUTPUT
