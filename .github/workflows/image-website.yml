@@ -26,10 +26,6 @@ on:
         description: Path to the Dockerfile
         required: true
         type: string
-      tags:
-        description: List of tags for the image (must be all lowercase). These will override the default tags.
-        required: false
-        type: string
       next-public-ga:
         description: Next public ga
         required: true
@@ -65,7 +61,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-      IMAGE_TAGS: ${{ inputs.tags }}
       NEXT_PUBLIC_GA: ${{ inputs.next-public-ga }}
       NEXT_PUBLIC_NAVER: ${{  inputs.next-public-naver }}
       NEXT_PUBLIC_DOMAIN: ${{ inputs.next-public-domain }}
@@ -75,19 +70,14 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Short SHA
-        if: inputs.push-image && env.IMAGE_TAGS == ''
-        run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)-${{inputs.environment}}" >> $GITHUB_ENV
       - id: generate-image-tags
-        # Do not overwrite tags if set already from input
-        if: inputs.push-image && env.IMAGE_TAGS == ''
-        # We're pushing an image and no tags supplied, so create defaults
+        if: inputs.push-image
         run: |
-          echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
-          echo "${{github.repository}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          echo "IMAGE_TAG=${{github.repository}}:${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
+          IMAGE_TAG="$(git rev-parse --short HEAD)-${{ github.run_number }}-${{inputs.environment}}"
+          IMAGE="${{github.repository}}:$IMAGE_TAG"
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          echo "IMAGE=$IMAGE" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
       - name: Setup SSH
         run: |
           mkdir -p -m 0700 "$HOME/.ssh"
@@ -105,14 +95,14 @@ jobs:
       - name: Info
         run: |
           echo "Push Image: ${{inputs.push-image}}"
-          echo "Tags: ${{env.IMAGE_TAGS}}"
+          echo "Image: ${{env.IMAGE}}"
       - name: Build image and push to Docker Hub
         id: docker_build
         uses: docker/build-push-action@v3
         with:
           context: .
           file: ${{ inputs.dockerfile }}
-          tags: ${{ env.IMAGE_TAGS }}
+          tags: ${{ env.IMAGE }}
           push: ${{ inputs.push-image }}
           ssh: default
           build-args: |
@@ -130,7 +120,7 @@ jobs:
         if: inputs.push-image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.IMAGE_TAGS }}
+          image-ref: ${{ env.IMAGE }}
           format: "json"
           output: "trivy-results.json"
           ignore-unfixed: true
@@ -177,7 +167,7 @@ jobs:
         run: |
           cd apps-infrastructure
           CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
-          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-${{inputs.environment}}.yaml"
+          printf "common:\n  image:\n    tag: \"${{env.IMAGE}}\"\n" > "${CHART_VALUES_PATH}/image-${{inputs.environment}}.yaml"
       - name: Commit new image
         env:
           GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
