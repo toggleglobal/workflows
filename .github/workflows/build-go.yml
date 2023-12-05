@@ -223,6 +223,7 @@ jobs:
           echo "One or more files appeared to be malformatted; run goimports locally then push your branch again."
           exit 1
         fi
+        exit 0
 
     - name: Verify dependencies
       run: go mod verify
