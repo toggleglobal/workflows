@@ -66,6 +66,7 @@ jobs:
       NEXT_PUBLIC_DOMAIN: ${{ inputs.next-public-domain }}
       NEXT_PUBLIC_COOKIE_PRO: ${{ inputs.next-public-cookie-pro }}
     outputs:
+      image: ${{ steps.generate-image-tags.outputs.IMAGE }}
       image-tag: ${{ steps.generate-image-tags.outputs.IMAGE_TAG }}
     steps:
       - name: Checkout Repository
@@ -167,7 +168,7 @@ jobs:
         run: |
           cd apps-infrastructure
           CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
-          printf "common:\n  image:\n    tag: \"${{env.IMAGE}}\"\n" > "${CHART_VALUES_PATH}/image-${{inputs.environment}}.yaml"
+          printf "common:\n  image:\n    tag: \"${{env.IMAGE_TAG}}\"\n" > "${CHART_VALUES_PATH}/image-${{inputs.environment}}.yaml"
       - name: Commit new image
         env:
           GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
