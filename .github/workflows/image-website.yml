@@ -80,6 +80,7 @@ jobs:
           IMAGE="${{github.repository}}:$IMAGE_TAG"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
           echo "IMAGE=$IMAGE" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
       - name: Setup SSH
         run: |
