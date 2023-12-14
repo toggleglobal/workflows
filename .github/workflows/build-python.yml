@@ -17,6 +17,12 @@ on:
         description: Set to true if sonarcloud analysis is required.
         required: true
         type: boolean
+      static_type_check:
+        description: Set to true if static type check is required. by default, it is disabled.
+        required: false
+        type: boolean
+        default: false
+
 
 jobs:
   build:
@@ -56,13 +62,27 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           poetry config virtualenvs.create true
           poetry config virtualenvs.in-project true
-          poetry add coverage flake8 pytest tox
+          poetry add coverage flake8 pytest tox pyright
           poetry install
 
       - name: Lint
         run: |
           source .venv/bin/activate
           flake8 .
+
+      - name: Stub files
+        if: ${{ hashFiles('stubs.sh') != '' }}
+        run: |
+          source .venv/bin/activate
+          chmod +x ./stubs.sh
+          ./stubs.sh
+        shell: bash
+
+      - name: Static type check
+        if: ${{ static_type_check }}
+        run: |
+          source .venv/bin/activate
+          pyright .
 
       - name: Test - pytest
         if: ${{ !inputs.tox_test }}
