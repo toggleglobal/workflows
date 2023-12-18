@@ -80,10 +80,10 @@ jobs:
       run: |
         echo "GOLANG_VERSION=$(yq -r '.golang.build.version' ./tmp/config.yml)" >> $GITHUB_ENV
 
-    - name: Short SHA
-      if: inputs.push-image && env.IMAGE_TAGS == ''
-      run: |
-        echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+    # - name: Short SHA
+    #   if: inputs.push-image && env.IMAGE_TAGS == ''
+    #   run: |
+    #     echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
     - name: Repository Suffix
       # Prepend hyphen if set
@@ -91,15 +91,15 @@ jobs:
       run: |
         echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
 
-    - name: Generate Image Tags
-      # Do not overwrite tags if set already from input
-      if: inputs.push-image && env.IMAGE_TAGS == ''
-      # We're pushing an image and no tags supplied, so create defaults
-      run: |
-        echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
-        echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
-        echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
+    # - name: Generate Image Tags
+    #   # Do not overwrite tags if set already from input
+    #   if: inputs.push-image && env.IMAGE_TAGS == ''
+    #   # We're pushing an image and no tags supplied, so create defaults
+    #   run: |
+    #     echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
+    #     echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
+    #     echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
+    #     echo "EOF" >> $GITHUB_ENV
 
     - name: Setup SSH
       run: |
@@ -112,12 +112,12 @@ jobs:
       with:
         install: true
 
-    - name: Login to DockerHub
-      if: inputs.push-image
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    # - name: Login to DockerHub
+    #   if: inputs.push-image
+    #   uses: docker/login-action@v2
+    #   with:
+    #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+    #     password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Info
       run: |
@@ -139,7 +139,7 @@ jobs:
         context: .
         file: ${{ inputs.dockerfile }}
         tags: ${{ env.IMAGE_TAGS }}
-        push: ${{ inputs.push-image }}
+        push: false #${{ inputs.push-image }}
         ssh: default
         build-args: |
           GOLANG_VERSION=${{ env.GOLANG_VERSION }}
@@ -147,79 +147,79 @@ jobs:
     - name: Image digest
       run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
 
-    - name: Run Trivy vulnerability scanner
-      if: inputs.push-image
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}
-        format: 'json'
-        output: 'trivy-results.json'
-        ignore-unfixed: true
-      env:
-        TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+    # - name: Run Trivy vulnerability scanner
+    #   if: inputs.push-image
+    #   uses: aquasecurity/trivy-action@master
+    #   with:
+    #     image-ref: ${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}
+    #     format: 'json'
+    #     output: 'trivy-results.json'
+    #     ignore-unfixed: true
+    #   env:
+    #     TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    #     TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Upload Trivy Reports
-      uses: actions/upload-artifact@v3
-      if: inputs.push-image
-      with:
-        name: Security Report
-        path: trivy-results.json
-        retention-days: 5
+    # - name: Upload Trivy Reports
+    #   uses: actions/upload-artifact@v3
+    #   if: inputs.push-image
+    #   with:
+    #     name: Security Report
+    #     path: trivy-results.json
+    #     retention-days: 5
 
-    - name: Checkout Workflows Repo
-      if: inputs.push-image
-      uses: actions/checkout@v3
-      with:
-        repository: "toggleglobal/workflows"
-        token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-        path: workflows
+    # - name: Checkout Workflows Repo
+    #   if: inputs.push-image
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: "toggleglobal/workflows"
+    #     token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+    #     path: workflows
 
-    - name: Run Trivy Parser
-      id: trivy-parser
-      if: inputs.push-image
-      run: ./workflows/.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
-      shell: bash
+    # - name: Run Trivy Parser
+    #   id: trivy-parser
+    #   if: inputs.push-image
+    #   run: ./workflows/.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
+    #   shell: bash
 
-    - name: Fail with Critical
-      if: inputs.push-image && steps.trivy-parser.outputs.stdout == 1
-      run: exit 1
+    # - name: Fail with Critical
+    #   if: inputs.push-image && steps.trivy-parser.outputs.stdout == 1
+    #   run: exit 1
 
-    - name: Checkout Chart
-      if: inputs.push-image && !inputs.skip-deploy
-      uses: actions/checkout@v3
-      with:
-        repository: "toggleglobal/apps-infrastructure"
-        token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-        path: apps-infrastructure
+    # - name: Checkout Chart
+    #   if: inputs.push-image && !inputs.skip-deploy
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: "toggleglobal/apps-infrastructure"
+    #     token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+    #     path: apps-infrastructure
 
-    - name: Setup git
-      if: inputs.push-image && !inputs.skip-deploy
-      run: |
-        git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
-        git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
+    # - name: Setup git
+    #   if: inputs.push-image && !inputs.skip-deploy
+    #   run: |
+    #     git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
+    #     git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
 
-    - name: Update image tag
-      if: inputs.push-image && !inputs.skip-deploy
-      run: |
-        cd apps-infrastructure
-        if [[ ${{inputs.runs-as}} == "cronjob" ]]; then
-          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}-cronjob/values"
-        else
-          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
-        fi
-        printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
+    # - name: Update image tag
+    #   if: inputs.push-image && !inputs.skip-deploy
+    #   run: |
+    #     cd apps-infrastructure
+    #     if [[ ${{inputs.runs-as}} == "cronjob" ]]; then
+    #       CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}-cronjob/values"
+    #     else
+    #       CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
+    #     fi
+    #     printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
 
-    - name: Commit new image
-      if: inputs.push-image && !inputs.skip-deploy
-      run: |
-        cd apps-infrastructure
-        git add .
-        if git status | grep -q "Changes to be committed"
-        then
-          git commit --message "Update dev image ${{ github.event.repository.name }}"
-          echo "Pushing git commit"
-          git push -u origin main
-        else
-          echo "No changes detected"
-        fi
+    # - name: Commit new image
+    #   if: inputs.push-image && !inputs.skip-deploy
+    #   run: |
+    #     cd apps-infrastructure
+    #     git add .
+    #     if git status | grep -q "Changes to be committed"
+    #     then
+    #       git commit --message "Update dev image ${{ github.event.repository.name }}"
+    #       echo "Pushing git commit"
+    #       git push -u origin main
+    #     else
+    #       echo "No changes detected"
+    #     fi
