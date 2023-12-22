@@ -165,7 +165,7 @@ jobs:
         run: |
           cd apps-infrastructure
           CHART_VALUES_PATH="./charts/${{ inputs.project-name }}/values"
-          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-${{inputs.environment}}.yaml"
+          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/toggle-image-${{inputs.environment}}.yaml"
       - name: Commit new image
         env:
           GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}

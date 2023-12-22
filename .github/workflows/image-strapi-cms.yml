@@ -151,7 +151,7 @@ jobs:
         run: |
           cd apps-infrastructure
           CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
-          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-dev.yaml"
+          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/toggle-image-dev.yaml"
       - name: Commit new image
         if: inputs.push-image && !inputs.skip-deploy
         run: |
