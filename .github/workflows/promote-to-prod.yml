@@ -50,7 +50,7 @@ jobs:
           else
             CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
           fi
-          cp "${CHART_VALUES_PATH}/image-dev.yaml" "${CHART_VALUES_PATH}/image-prod.yaml"
+          cp "${CHART_VALUES_PATH}/toggle-image-dev.yaml" "${CHART_VALUES_PATH}/image-prod.yaml"
 
       - name: create pr
         env:
