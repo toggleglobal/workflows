@@ -1,0 +1,70 @@
+on:
+  workflow_call:
+    secrets:
+      DEPLOYER_EMAIL:
+        required: true
+      DEPLOYER_USERNAME:
+        required: true
+      DEPLOYER_GITHUB_TOKEN:
+        required: true
+    inputs:
+      image-tag:
+        description: The image tag that needs to be promoted
+        required: true
+        default: dev
+        type: string
+      environment:
+        description: The target environment to build and deploy image
+        required: true
+        default: dev
+        type: string
+      project-name:
+        description: The name of the project to deploy build to
+        required: true
+        default: web-app
+        type: string
+
+jobs:
+  promote-to-env:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Chart
+      uses: actions/checkout@v3
+      with:
+        repository: "toggleglobal/apps-infrastructure"
+        token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+        path: apps-infrastructure
+
+    - name: Setup git
+      run: |
+        git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
+        git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
+    - name: Update image tag
+      run: |
+        cd apps-infrastructure
+        CHART_VALUES_PATH="./charts/${{ inputs.project-name }}/values"
+        printf "common:\n  image:\n    tag: \"${{ inputs.image-tag }}\"\n" > "${CHART_VALUES_PATH}/gutentog-image-${{inputs.environment}}.yaml"
+    - name: Commit new image
+      env:
+        GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+      run: |
+        cd apps-infrastructure
+        git add .
+        if git status | grep -q "Changes to be committed"
+        then
+          if [[ ${{inputs.environment}} == "prod" ]]; then
+            BRANCH_NAME="${{ inputs.project-name }}-${GITHUB_RUN_ID}"
+            git checkout -b ${BRANCH_NAME}
+            git commit --message "Promote to ${{ inputs.environment }} from ${{ inputs.project-name }}"
+            echo "Pushing git commit"
+            git push -u origin ${BRANCH_NAME}
+            echo "Creating a pull request"
+            gh pr create -t "Promote to Gutentog ${{ inputs.environment }} ${{ inputs.project-name }}" -B "main" -b "Promote to production ${{ inputs.project-name }}" -H ${BRANCH_NAME}
+          else
+            git commit --message "Update Gutentog ${{ inputs.environment }} env image ${{ inputs.project-name }}"
+            echo "Pushing git commit"
+            git push -u origin main
+          fi
+        else
+          echo "No changes detected"
+        fi
