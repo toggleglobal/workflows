@@ -7,7 +7,7 @@ on:
         type: string
       jobs:
         description: What jobs needs to notify, like "[build, image]".
-        required: true
+        required: false
         type: string
       include_workflow_status:
         description: Includes the overall workflow conclusion and status of individual jobs.
