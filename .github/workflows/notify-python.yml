@@ -8,12 +8,12 @@ on:
       include_workflow_status:
         description: Includes the overall workflow conclusion and status of individual jobs.
         required: false
-        default: false
+        default: true
         type: boolean
 
 jobs:
   notify:
-    name: Notify
+    name: Slack Notification
     runs-on: ubuntu-latest
     if: always()
     steps:
