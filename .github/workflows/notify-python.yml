@@ -1,0 +1,35 @@
+on:
+  workflow_call:
+    inputs:
+      stage:
+        description: Which stage is the notification for, like 'build' or 'pr'.
+        required: true
+        type: string
+      jobs:
+        description: What jobs needs to notify, like "[build, image]".
+        required: true
+        type: string
+      include_workflow_status:
+        description: Includes the overall workflow conclusion and status of individual jobs.
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: ${{ fromJson(inputs.jobs) }}
+    if: always()
+    steps:
+      - name: Set channel
+        id: set-channel
+        run: |
+          echo "channel=${{inputs.stage == 'build' && 'dev-ds-build' || inputs.stage == 'pr' && 'dev-ds-pr'}}" >> $GITHUB_OUTPUT
+      - uses: spaceweasel/slackhub@main
+        with:
+          channel: ${{ steps.set-channel.outputs.channel }}
+          include_workflow_status: ${{ inputs.include_workflow_status }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
