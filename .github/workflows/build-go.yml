@@ -172,7 +172,8 @@ jobs:
       VAULT_DEV_TOKEN_ID: vault-root-token
       CLICKHOUSE_CONN_URI: "clickhouse://localhost:9000/default?username=default"
       CLICKHOUSE_MIGRATIONS: ../../db/migrations/clickhouse
-      MANTICORE_CONN_URI: "tcp(localhost:9306)/test"
+      MANTICORE_CONN_URI: "mysql://localhost:9306/test"
+      MANTICORE_MIGRATIONS: ../../db/migrations/manticore
       GOLANG_VERSION: ${{ inputs.golang-version }}
       GOPRIVATE: github.com/toggleglobal/*
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
