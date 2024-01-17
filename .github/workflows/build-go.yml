@@ -30,6 +30,9 @@ on:
       requires-clickhouse:
         type: boolean
         required: false
+      requires-manticore:
+        type: boolean
+        required: false
 
 jobs:
   required:
@@ -78,6 +81,12 @@ jobs:
         "ports":["9000:9000"],
         "options": "--health-cmd \"clickhouse status\" --health-interval 10s --health-timeout 5s --health-retries 5"
         }
+      MANTICORE: >-
+        "manticore": {
+        "image": "manticoresearch/manticore",
+        "ports":["9306:9306"],
+        "options": "--health-cmd \"searchd --status\" --health-interval 10s --health-timeout 5s --health-retries 5"
+        }
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.required.outputs.services }}
@@ -122,6 +131,14 @@ jobs:
           else
             echo 'SERVICES=${{env.SERVICES}},${{env.CLICKHOUSE}}' >> $GITHUB_ENV
           fi
+      - name: Requires Manticore
+        if: inputs.requires-manticore
+        run: |
+          if [[ -z '${{ env.SERVICES }}' ]]; then
+            echo 'SERVICES=${{env.SERVICES}}${{env.MANTICORE}}' >> $GITHUB_ENV
+          else
+            echo 'SERVICES=${{env.SERVICES}},${{env.MANTICORE}}' >> $GITHUB_ENV
+          fi
       - id: required
         run: |
           echo services='{${{env.SERVICES}}}' >> $GITHUB_OUTPUT
@@ -133,6 +150,7 @@ jobs:
           echo "::notice ::Requires Redis: ${{ inputs.requires-redis }}"
           echo "::notice ::Requires Vault: ${{ inputs.requires-vault }}"
           echo "::notice ::Requires ClickHouse: ${{ inputs.requires-clickhouse }}"
+          echo "::notice ::Requires Manticore: ${{ inputs.requires-manticore }}"
 
   build:
     name: Build & Test
@@ -154,6 +172,8 @@ jobs:
       VAULT_DEV_TOKEN_ID: vault-root-token
       CLICKHOUSE_CONN_URI: "clickhouse://localhost:9000/default?username=default"
       CLICKHOUSE_MIGRATIONS: ../../db/migrations/clickhouse
+      MANTICORE_CONN_URI: "mysql://localhost:9306/test"
+      MANTICORE_MIGRATIONS: ../../db/migrations/manticore
       GOLANG_VERSION: ${{ inputs.golang-version }}
       GOPRIVATE: github.com/toggleglobal/*
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
