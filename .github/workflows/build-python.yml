@@ -62,7 +62,6 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           poetry config virtualenvs.create true
           poetry config virtualenvs.in-project true
-          poetry add coverage flake8 pytest tox pyright
           poetry install
 
       - name: Lint
