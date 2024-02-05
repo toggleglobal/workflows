@@ -52,6 +52,11 @@ on:
         default: service
         required: false
         type: string
+      remove-tool-cache:
+        description: Remove tool cache.
+        default: false
+        required: false
+        type: boolean
     outputs:
       image-tag:
         value: ${{ jobs.build-image.outputs.image-tag }}
@@ -68,6 +73,22 @@ jobs:
     outputs:
       image-tag: ${{ steps.generate-image-tags.outputs.IMAGE_TAG }}
     steps:
+    - name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@main
+      with:
+        # this might remove tools that are actually needed,
+        # if set to "true" but frees about 6 GB
+        tool-cache: ${{ inputs.remove-tool-cache }}
+
+        # all of these default to true, but feel free to set to
+        # "false" if necessary for your workflow
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: true
+        docker-images: true
+        swap-storage: true
+
     - name: Checkout Repository
       uses: actions/checkout@v3
 
