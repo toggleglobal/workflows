@@ -211,7 +211,7 @@ jobs:
         if [[ ${{inputs.is-poc}} == true ]]; then
           printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-poc.yaml"
         else
-          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/gutentog-image-dev.yaml"
+          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/terminal-image-dev.yaml"
         fi
     - name: Commit new image
       if: inputs.push-image

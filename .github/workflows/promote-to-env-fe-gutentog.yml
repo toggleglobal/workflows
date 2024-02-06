@@ -43,7 +43,7 @@ jobs:
       run: |
         cd apps-infrastructure
         CHART_VALUES_PATH="./charts/${{ inputs.project-name }}/values"
-        printf "common:\n  image:\n    tag: \"${{ inputs.image-tag }}\"\n" > "${CHART_VALUES_PATH}/gutentog-image-${{inputs.environment}}.yaml"
+        printf "common:\n  image:\n    tag: \"${{ inputs.image-tag }}\"\n" > "${CHART_VALUES_PATH}/terminal-image-${{inputs.environment}}.yaml"
     - name: Commit new image
       env:
         GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
