@@ -208,7 +208,7 @@ jobs:
         else
           CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
         fi
-        printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/gutentog-image-dev.yaml"
+        printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/terminal-image-dev.yaml"
 
     - name: Commit new image
       if: inputs.push-image && !inputs.skip-deploy
