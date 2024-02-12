@@ -67,7 +67,7 @@ jobs:
       - name: Format
         uses: psf/black@stable
         with:
-          options: "--line-length=120"
+          options: --line-length=120 --check --diff --color
 
       - name: Lint
         run: |
