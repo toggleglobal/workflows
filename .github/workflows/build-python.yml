@@ -36,6 +36,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: psf/black@stable
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -64,7 +65,7 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install
 
-      - name: Lint
+     - name: Lint
         run: |
           source .venv/bin/activate
           flake8 .
