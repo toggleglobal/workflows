@@ -41,7 +41,7 @@ jobs:
         run: |
           echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
       - name: update image tag prod
-        # This step simply copies image-dev.yaml to image-prod.yaml file for
+        # This step simply copies terminal-image-dev.yaml to terminal-image-prod.yaml file for
         # the specific chart, as the images used by dev and prod are the same.
         run: |
           cd apps-infrastructure
@@ -50,7 +50,7 @@ jobs:
           else
             CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
           fi
-          cp "${CHART_VALUES_PATH}/toggle-image-dev.yaml" "${CHART_VALUES_PATH}/image-prod.yaml"
+          cp "${CHART_VALUES_PATH}/terminal-image-dev.yaml" "${CHART_VALUES_PATH}/terminal-image-prod.yaml"
 
       - name: create pr
         env:
