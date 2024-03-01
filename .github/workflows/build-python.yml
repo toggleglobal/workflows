@@ -40,7 +40,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-
+      - uses: chartboost/ruff-action@v1
       - name: Setup SSH and git
         run: |
           mkdir -p -m 0700 "$HOME/.ssh"
@@ -53,7 +53,7 @@ jobs:
         if: inputs.dependency-management == 'pip'
         run: |
           python -m pip install --upgrade pip
-          pip install coverage flake8 pytest tox
+          pip install coverage pytest tox
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Add Dependencies via Poetry
@@ -63,16 +63,6 @@ jobs:
           poetry config virtualenvs.create true
           poetry config virtualenvs.in-project true
           poetry install
-
-      - name: Format
-        uses: psf/black@stable
-        with:
-          options: --line-length=120 --check --diff --color --force-exclude='''(.*.pyi|.*_pb2.py|.*_pb2_grpc.py)'''
-
-      - name: Lint
-        run: |
-          source .venv/bin/activate
-          flake8 .
 
       - name: Create stubs
         if: ${{ hashFiles('stubs.sh') != '' }}
