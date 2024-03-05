@@ -22,7 +22,11 @@ on:
         required: false
         type: boolean
         default: false
-
+      linter:
+        description: Select 'black' or 'ruff' as linter.
+        required: false
+        type: string
+        default: 'black'
 
 jobs:
   build:
@@ -40,7 +44,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-
+      - name: Format
+        if: inputs.linter == 'ruff'
+        uses: chartboost/ruff-action@v1
+        with:
+          args: format --diff
+      - name: Lint
+        if: inputs.linter == 'ruff'
+        uses: chartboost/ruff-action@v1
+        with:
+          args: check
       - name: Setup SSH and git
         run: |
           mkdir -p -m 0700 "$HOME/.ssh"
@@ -53,7 +66,7 @@ jobs:
         if: inputs.dependency-management == 'pip'
         run: |
           python -m pip install --upgrade pip
-          pip install coverage flake8 pytest tox
+          pip install coverage pytest tox
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Add Dependencies via Poetry
@@ -65,11 +78,13 @@ jobs:
           poetry install
 
       - name: Format
+        if: inputs.linter == 'black'
         uses: psf/black@stable
         with:
           options: --line-length=120 --check --diff --color --force-exclude='''(.*.pyi|.*_pb2.py|.*_pb2_grpc.py)'''
 
       - name: Lint
+        if: inputs.linter == 'black'
         run: |
           source .venv/bin/activate
           flake8 .
