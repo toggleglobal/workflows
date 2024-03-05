@@ -24,7 +24,7 @@ on:
         default: false
       linter:
         description: Select 'black' or 'ruff' as linter.
-        required: true
+        required: false
         type: string
         default: 'black'
 
