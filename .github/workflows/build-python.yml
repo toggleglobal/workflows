@@ -22,7 +22,11 @@ on:
         required: false
         type: boolean
         default: false
-
+      linter:
+        description: Select 'black' or 'ruff' as linter.
+        required: true
+        type: string
+        default: 'black'
 
 jobs:
   build:
@@ -41,10 +45,12 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Format
+        if: inputs.linter == 'ruff'
         uses: chartboost/ruff-action@v1
         with:
           args: format --diff
       - name: Lint
+        if: inputs.linter == 'ruff'
         uses: chartboost/ruff-action@v1
         with:
           args: check
@@ -70,6 +76,18 @@ jobs:
           poetry config virtualenvs.create true
           poetry config virtualenvs.in-project true
           poetry install
+
+      - name: Format
+        if: inputs.linter == 'black'
+        uses: psf/black@stable
+        with:
+          options: --line-length=120 --check --diff --color --force-exclude='''(.*.pyi|.*_pb2.py|.*_pb2_grpc.py)'''
+
+      - name: Lint
+        if: inputs.linter == 'black'
+        run: |
+          source .venv/bin/activate
+          flake8 .
 
       - name: Create stubs
         if: ${{ hashFiles('stubs.sh') != '' }}
