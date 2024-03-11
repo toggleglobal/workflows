@@ -1,3 +1,19 @@
 golang:
   build:
     version: 1.22
+staticcheck:
+  version: latest
+  # As later versions might introduce new checks that prevent builds from succeeding,
+  # we will use the -checks flag with check negation to exclude problematic checks.
+  # The basic configuration for staticcheck already excludes certain checks, so we'll
+  # mimic that behaviour here:
+  #   ST1000: Incorrect or missing package comment
+  #   ST1003: Poorly chosen identifier
+  #   ST1016: Use consistent method receiver names
+  #   ST1020: The documentation of an exported function should start with the function's name
+  #   ST1021: The documentation of an exported type should start with type's name
+  #   ST1022: The documentation of an exported variable or constant should start with variable's name
+  #   ST1023: Redundant type in variable declaration
+  # -----
+  # Any additional excluded checks should be detailed here
+  checks: all,-ST1000,-ST1003,-ST1016,-ST1020,-ST1021,-ST1022,-ST1023
