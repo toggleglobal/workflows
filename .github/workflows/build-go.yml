@@ -201,6 +201,11 @@ jobs:
       run: |
         echo "GOLANG_VERSION=$(yq -r '.golang.build.version' ./tmp/config.yml)" >> $GITHUB_ENV
 
+    - name: Set StaticCheck Config
+      run: |
+        echo "STATICCHECK_VERSION=$(yq -r '.staticcheck.version' ./tmp/config.yml)" >> $GITHUB_ENV
+        echo "STATICCHECK_CHECKS=$(yq -r '.staticcheck.checks' ./tmp/config.yml)" >> $GITHUB_ENV
+
     - name: Setup SSH and git
       run: |
         mkdir -p -m 0700 "$HOME/.ssh"
@@ -261,10 +266,10 @@ jobs:
       run: go vet ./...
 
     - name: Install staticcheck
-      run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      run: go install honnef.co/go/tools/cmd/staticcheck@${{ env.STATICCHECK_VERSION }}
 
     - name: Run staticcheck
-      run: staticcheck ./...
+      run: staticcheck -checks "${{ env.STATICCHECK_CHECKS }}" ./...
 
     - name: Extract source strings
       if: env.LOCALAZY_READ_KEY != '' && env.LOCALAZY_WRITE_KEY != ''
