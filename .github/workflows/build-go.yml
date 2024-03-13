@@ -186,11 +186,11 @@ jobs:
       LOCALAZY_WRITE_KEY: ${{ secrets.LOCALAZY_WRITE_KEY }}
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Checkout Config
       # Checkout workflow repo to gain access to config file
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: toggleglobal/workflows
         path: './tmp'
@@ -215,7 +215,7 @@ jobs:
         git config --global url."git@github.com:toggleglobal".insteadOf https://github.com/toggleglobal
 
     - name: Setup Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version: ${{ env.GOLANG_VERSION }}
         check-latest: false
