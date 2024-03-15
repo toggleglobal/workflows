@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: imjasonh/setup-crane@v0.1
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -42,11 +42,11 @@ jobs:
         run: |
           crane export ${{ inputs.source-image }} - | tar -xf - ${{ matrix.src }}
       - name: Auth in GCP
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: "${{ secrets[inputs.google-creds-env] }}"
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
       - name: Upload to static bucket
         run: |
           gsutil rsync -r ./${{ matrix.src }} gs://${{ inputs.static-bucket }}/${{ inputs.unique-path }}/${{ matrix.dst }}/

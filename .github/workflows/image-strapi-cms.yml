@@ -108,7 +108,7 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Upload Trivy Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: inputs.push-image
         with:
           name: Security Report
@@ -117,7 +117,7 @@ jobs:
 
       - name: Checkout Workflows Repo
         if: inputs.push-image
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "toggleglobal/workflows"
           token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
@@ -135,7 +135,7 @@ jobs:
 
       - name: Checkout Chart
         if: inputs.push-image && !inputs.skip-deploy
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "toggleglobal/apps-infrastructure"
           token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}

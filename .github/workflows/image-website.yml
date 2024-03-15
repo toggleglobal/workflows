@@ -92,7 +92,7 @@ jobs:
         with:
           install: true
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -102,7 +102,7 @@ jobs:
           echo "Image: ${{env.IMAGE}}"
       - name: Build image and push to Docker Hub
         id: docker_build
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ${{ inputs.dockerfile }}
@@ -133,7 +133,7 @@ jobs:
           TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Upload Trivy Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: inputs.push-image
         with:
           name: Security Report
@@ -141,7 +141,7 @@ jobs:
           retention-days: 5
       - name: Checkout Workflows Repo
         if: inputs.push-image
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "toggleglobal/workflows"
           token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
