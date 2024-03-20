@@ -157,7 +157,7 @@ jobs:
 
   update-app-chart:
     needs: [ build-image, scan-image ]
-    if: inputs.push-image
+    if: inputs.push-image && !inputs.skip-deploy
     secrets: inherit
     uses: toggleglobal/workflows/.github/workflows/update-app-chart.yml@refactor-wflow-dry
     with:
