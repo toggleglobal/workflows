@@ -26,7 +26,7 @@ jobs:
       REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: "toggleglobal/apps-infrastructure"
           token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}

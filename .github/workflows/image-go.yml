@@ -187,7 +187,7 @@ jobs:
 
     - name: Checkout Chart
       if: inputs.push-image && !inputs.skip-deploy
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: "toggleglobal/apps-infrastructure"
         token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
