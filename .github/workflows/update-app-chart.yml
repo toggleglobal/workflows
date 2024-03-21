@@ -13,6 +13,21 @@ on:
         default: service
         required: false
         type: string
+      repository-suffix:
+        description: >
+          Adds a hyphen separated suffix to the repository name used to create image tags (must be all lowercase).
+          This is primarily for use where a repository has more than one Dockerfile. This is ignored if tags has been set.
+        required: false
+        type: string  
+      short-sha:
+        description: git commit short-sha hash
+        required: true
+        type: string 
+      is-poc:
+        description: Use poc environment to deploy if set to true
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   update-app-chart:
@@ -38,6 +53,7 @@ jobs:
           else
             CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
           fi
+
           if [[ ${{inputs.is-poc}} == true ]]; then
             printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-poc.yaml"
           else

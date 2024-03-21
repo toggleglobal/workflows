@@ -58,7 +58,8 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     outputs:
-      image-ref: ${{ steps.gen-ref.outputs.image-ref }}
+      image-ref: ${{ steps.gen-ref.outputs.IMAGE_REF }}
+      short-sha: ${{ steps.short-sha.outputs.SHORT_SHA }}
     env:
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       IMAGE_TAGS: ${{ inputs.tags }}
@@ -83,9 +84,11 @@ jobs:
           echo "GOLANG_VERSION=$(yq -r '.golang.build.version' ./tmp/config.yml)" >> $GITHUB_ENV
 
       - name: Short SHA
+        id: short-sha
         if: inputs.push-image && env.IMAGE_TAGS == ''
         run: |
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "SHORT_SHA=${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
 
       - name: Repository Suffix
         # Prepend hyphen if set
@@ -94,21 +97,16 @@ jobs:
           echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
 
       - name: Generate Image Tags
+        id: gen-ref
         # Do not overwrite tags if set already from input
         if: inputs.push-image && env.IMAGE_TAGS == ''
         # We're pushing an image and no tags supplied, so create defaults
         run: |
           echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
           echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
-          echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
           echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-
-      - name: Generate Image Ref
-        id: gen-ref
-        if: inputs.push-image
-        run: |
-          echo "image-ref=${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
+          echo "IMAGE_REF=${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
           
       - name: Setup SSH
         run: |
@@ -172,3 +170,4 @@ jobs:
     uses: toggleglobal/workflows/.github/workflows/update-app-chart.yml@refactor-wflow-dry
     with:
       runs-as: inputs.runs-as
+      short-sha: ${{ needs.build-image.outputs.short-sha }} 
