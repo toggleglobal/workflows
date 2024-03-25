@@ -88,7 +88,7 @@ jobs:
         if: inputs.push-image && env.IMAGE_TAGS == ''
         run: |
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "SHORT_SHA=${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
+          echo "SHORT_SHA=${{git rev-parse --short HEAD}}" >> $GITHUB_OUTPUT
 
       - name: Repository Suffix
         # Prepend hyphen if set
