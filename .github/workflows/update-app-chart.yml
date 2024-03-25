@@ -1,0 +1,73 @@
+on:
+  workflow_call:
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+      DEPLOYER_GITHUB_TOKEN:
+        required: true
+    inputs:
+      runs-as:
+        description: Defines how the built image is expected to be run, e.g service or cronjob.
+        default: service
+        required: false
+        type: string
+      repository-suffix:
+        description: >
+          Adds a hyphen separated suffix to the repository name used to create image tags (must be all lowercase).
+          This is primarily for use where a repository has more than one Dockerfile. This is ignored if tags has been set.
+        required: false
+        type: string  
+      short-sha:
+        description: git commit short-sha hash
+        required: true
+        type: string 
+      is-poc:
+        description: Use poc environment to deploy if set to true
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  update-app-chart:
+    runs-on: ubuntu-latest
+    steps:    
+      - name: Checkout Chart
+        uses: actions/checkout@v4
+        with:
+          repository: "toggleglobal/apps-infrastructure"
+          token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+          path: apps-infrastructure
+
+      - name: Setup git
+        run: |
+          git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
+          git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
+
+      - name: Update image tag
+        run: |
+          cd apps-infrastructure
+          if [[ ${{inputs.runs-as}} == "cronjob" ]]; then
+            CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}-cronjob/values"
+          else
+            CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
+          fi
+
+          if [[ ${{inputs.is-poc}} == true ]]; then
+            printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-poc.yaml"
+          else
+            printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/terminal-image-dev.yaml"
+          fi
+      - name: Commit new image
+        run: |
+          cd apps-infrastructure
+          git add .
+          if git status | grep -q "Changes to be committed"
+          then
+            git commit --message "Update image ${{ github.event.repository.name }}"
+            echo "Pushing git commit"
+            git push -u origin main
+          else
+            echo "No changes detected"
+          fi
