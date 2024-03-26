@@ -49,15 +49,15 @@ jobs:
         run: |
           cd apps-infrastructure
           if [[ ${{inputs.runs-as}} == "cronjob" ]]; then
-            CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{input.repository-suffix}}-cronjob/values"
+            CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{inputs.repository-suffix}}-cronjob/values"
           else
-            CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{input.repository-suffix}}/values"
+            CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{inputs.repository-suffix}}/values"
           fi
 
           if [[ ${{inputs.is-poc}} == true ]]; then
-            printf "common:\n  image:\n    tag: \"${{input.short-sha}}\"\n" > "${CHART_VALUES_PATH}/image-poc.yaml"
+            printf "common:\n  image:\n    tag: \"${{inputs.short-sha}}\"\n" > "${CHART_VALUES_PATH}/image-poc.yaml"
           else
-            printf "common:\n  image:\n    tag: \"${{input.short-sha}}\"\n" > "${CHART_VALUES_PATH}/terminal-image-dev.yaml"
+            printf "common:\n  image:\n    tag: \"${{inputs.short-sha}}\"\n" > "${CHART_VALUES_PATH}/terminal-image-dev.yaml"
           fi
       - name: Commit new image
         run: |
