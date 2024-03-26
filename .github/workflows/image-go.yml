@@ -65,9 +65,10 @@ jobs:
       GOLANG_VERSION: ${{ inputs.golang-version }}
       REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
     steps:
+
       - name: Checkout Repository
         uses: actions/checkout@v4
-
+        
       - name: Checkout Config
         # Checkout workflow repo to gain access to config files
         uses: actions/checkout@v4
@@ -113,6 +114,8 @@ jobs:
       SHORT_SHA: ${{ needs.setup.outputs.short-sha }}
       LOCALAZY_READ_KEY: ${{ secrets.LOCALAZY_READ_KEY }}
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Generate Image Tags
         id: gen-ref
