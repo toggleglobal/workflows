@@ -60,6 +60,7 @@ jobs:
     outputs:
       image-ref: ${{ steps.gen-ref.outputs.IMAGE_REF }}
       short-sha: ${{ steps.short-sha.outputs.SHORT_SHA }}
+      repository-suffix: ${{ steps.repo-suffix.outputs.REPOSITORY_SUFFIX }}
     env:
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       IMAGE_TAGS: ${{ inputs.tags }}
@@ -91,10 +92,12 @@ jobs:
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Repository Suffix
+        id: repo-suffix
         # Prepend hyphen if set
         if: env.REPOSITORY_SUFFIX != ''
         run: |
           echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
+          echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_OUTPUT
 
       - name: Generate Image Tags
         id: gen-ref
@@ -170,4 +173,5 @@ jobs:
     uses: toggleglobal/workflows/.github/workflows/update-app-chart.yml@main
     with:
       runs-as: inputs.runs-as
-      short-sha: ${{ needs.build-image.outputs.short-sha }} 
+      short-sha: ${{ needs.build-image.outputs.short-sha }}
+      repository-suffix: ${{ needs.build-image.outputs.repository-suffix }}
