@@ -54,19 +54,16 @@ on:
         type: string
 
 jobs:
-  build-image:
-    name: Build
+  setup:
+    name: Setup Pipeline
     runs-on: ubuntu-latest
     outputs:
-      image-ref: ${{ steps.gen-ref.outputs.IMAGE_REF }}
       short-sha: ${{ steps.short-sha.outputs.SHORT_SHA }}
       repository-suffix: ${{ steps.repo-suffix.outputs.REPOSITORY_SUFFIX }}
+      golang-version: ${{ steps.golang-version.outputs.GOLANG_VERSION }}
     env:
-      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-      IMAGE_TAGS: ${{ inputs.tags }}
       GOLANG_VERSION: ${{ inputs.golang-version }}
       REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
-      LOCALAZY_READ_KEY: ${{ secrets.LOCALAZY_READ_KEY }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -80,15 +77,15 @@ jobs:
           ref: main
 
       - name: Set Default Golang Build Version
+        id: golang-version
         if: env.GOLANG_VERSION == ''
         run: |
-          echo "GOLANG_VERSION=$(yq -r '.golang.build.version' ./tmp/config.yml)" >> $GITHUB_ENV
+          echo "GOLANG_VERSION=$(yq -r '.golang.build.version' ./tmp/config.yml)" >> $GITHUB_OUTPUT
 
       - name: Short SHA
         id: short-sha
-        if: inputs.push-image && env.IMAGE_TAGS == ''
+        if: inputs.push-image
         run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Repository Suffix
@@ -96,8 +93,26 @@ jobs:
         # Prepend hyphen if set
         if: env.REPOSITORY_SUFFIX != ''
         run: |
-          echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
           echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_OUTPUT
+
+
+
+  
+  build-push-image:
+    name: Build and Push Image
+    needs: [ setup ]
+    if: inputs.push-image
+    runs-on: ubuntu-latest
+    outputs:
+      image-ref: ${{ steps.gen-ref.outputs.IMAGE_REF }}
+    env:
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      IMAGE_TAGS: ${{ inputs.tags }}
+      GOLANG_VERSION: ${{ needs.setup.outputs.golang-version }}
+      REPOSITORY_SUFFIX: ${{ needs.setup.outputs.repository-suffix }}
+      SHORT_SHA: ${{ needs.setup.outputs.short-sha }}
+      LOCALAZY_READ_KEY: ${{ secrets.LOCALAZY_READ_KEY }}
+    steps:
 
       - name: Generate Image Tags
         id: gen-ref
@@ -157,21 +172,20 @@ jobs:
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
 
-
   scan-image:
-    needs: [ build-image ]
+    needs: [ setup, build-push-image ]
     if: inputs.push-image
     secrets: inherit
     uses: toggleglobal/workflows/.github/workflows/vulnerability-scanner.yml@main
     with:
-      image: ${{ needs.build-image.outputs.image-ref }}
+      image: ${{ needs.setup.outputs.image-ref }}
 
   update-app-chart:
-    needs: [ build-image, scan-image ]
+    needs: [ setup, build-push-image, scan-image ]
     if: inputs.push-image && !inputs.skip-deploy
     secrets: inherit
     uses: toggleglobal/workflows/.github/workflows/update-app-chart.yml@main
     with:
       runs-as: inputs.runs-as
-      short-sha: ${{ needs.build-image.outputs.short-sha }}
-      repository-suffix: ${{ needs.build-image.outputs.repository-suffix }}
+      short-sha: ${{ needs.setup.outputs.short-sha }}
+      repository-suffix: ${{ needs.setup.outputs.repository-suffix }}
