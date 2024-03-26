@@ -99,7 +99,9 @@ jobs:
         # Prepend hyphen if set
         if: env.REPOSITORY_SUFFIX != ''
         run: |
-          echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
+          REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}
+          echo "REPOSITORY_SUFFIX=$REPOSITORY_SUFFIX" >> $GITHUB_ENV
+          echo "REPOSITORY_SUFFIX=$REPOSITORY_SUFFIX" >> $GITHUB_OUTPUT
 
       - name: Generate Image Tags
         id: gen-ref
@@ -135,7 +137,9 @@ jobs:
         run: |
           echo "Push Image: ${{inputs.push-image}}"
           echo "Tags: ${{env.IMAGE_TAGS}}"
-          echo "Golang Version: ${{env.GOLANG_VERSION}}}"
+          echo "Golang Version: ${{env.GOLANG_VERSION}}"
+          echo "Short-SHA: ${{env.SHORT_SHA}}"
+          echo "Repository-suffix: ${{env.REPOSITORY_SUFFIX}}"
 
       - name: Download translations from Localazy
         if: env.LOCALAZY_READ_KEY != ''
