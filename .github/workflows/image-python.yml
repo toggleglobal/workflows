@@ -71,7 +71,7 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
       REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
     outputs:
-      image-tag: ${{ steps.gen-ref.outputs.IMAGE_TAG }
+      image-tag: ${{ steps.gen-ref.outputs.IMAGE_TAG }}
       image-ref: ${{ steps.gen-ref.outputs.IMAGE_REF }}
       short-sha: ${{ steps.short-sha.outputs.SHORT_SHA }}
       repository-suffix: ${{ steps.repo-suffix.outputs.REPOSITORY_SUFFIX }}
