@@ -128,7 +128,7 @@ jobs:
     needs: [ build-push-image, scan-image ]
     if: inputs.push-image && !inputs.skip-deploy
     secrets: inherit
-    uses: toggleglobal/workflows/.github/workflows/update-app-chart.yml@main
+    uses: toggleglobal/workflows/.github/workflows/update-app-chart.yml@refactor-strapi-cms-wf
     with:
       runs-as: inputs.runs-as
       short-sha: ${{ needs.build-push-image.outputs.short-sha }}
