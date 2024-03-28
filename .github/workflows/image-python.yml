@@ -33,6 +33,11 @@ on:
         description: Path to the Dockerfile
         required: true
         type: string
+      skip-deploy:
+        description: Prevents modifications to apps-infrastructure when set to true. Primarily for testing.
+        required: false
+        type: boolean
+        default: false
       tags:
         description: List of tags for the image (must be all lowercase). These will override the default tags.
         required: false
@@ -54,11 +59,11 @@ on:
         type: string
     outputs:
       image-tag:
-        value: ${{ jobs.build-image.outputs.image-tag }}
+        value: ${{ jobs.build-push-image.outputs.image-tag }}
 
 jobs:
-  build-image:
-    name: Build
+  build-push-image:
+    name: Build and Push Image
     runs-on: ubuntu-latest
     env:
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -66,163 +71,112 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
       REPOSITORY_SUFFIX: ${{ inputs.repository-suffix }}
     outputs:
-      image-tag: ${{ steps.generate-image-tags.outputs.IMAGE_TAG }}
+      image-tag: ${{ steps.gen-ref.outputs.IMAGE_TAG }}
+      image-ref: ${{ steps.gen-ref.outputs.IMAGE_REF }}
+      short-sha: ${{ steps.short-sha.outputs.SHORT_SHA }}
+      repository-suffix: ${{ steps.repo-suffix.outputs.REPOSITORY_SUFFIX }}
     steps:
-    - name: Free Disk Space
-      uses: jlumbroso/free-disk-space@main
-      with:
-        # all of these default to true in action
-        # we want to delete only unused runtimes here
-        tool-cache: false
-        docker-images: false
-        large-packages: false
-        swap-storage: false
-        android: true
-        dotnet: true
-        haskell: true
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # all of these default to true in action
+          # we want to delete only unused runtimes here
+          tool-cache: false
+          docker-images: false
+          large-packages: false
+          swap-storage: false
+          android: true
+          dotnet: true
+          haskell: true
 
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Short SHA
-      if: inputs.push-image && env.IMAGE_TAGS == ''
-      run: |
-        echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Short SHA
+        id: short-sha
+        if: inputs.push-image
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
 
-    - name: Repository Suffix
-      # Prepend hyphen if set
-      if: env.REPOSITORY_SUFFIX != ''
-      run: |
-        echo "REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}" >> $GITHUB_ENV
+      - name: Repository Suffix
+        id: repo-suffix
+        # Prepend hyphen if set
+        if: env.REPOSITORY_SUFFIX != ''
+        run: |
+          REPOSITORY_SUFFIX=-${{env.REPOSITORY_SUFFIX}}
+          echo "REPOSITORY_SUFFIX=$REPOSITORY_SUFFIX" >> $GITHUB_ENV
+          echo "REPOSITORY_SUFFIX=$REPOSITORY_SUFFIX" >> $GITHUB_OUTPUT
 
-    - id: generate-image-tags
-      # Do not overwrite tags if set already from input
-      if: inputs.push-image && env.IMAGE_TAGS == ''
-      # We're pushing an image and no tags supplied, so create defaults
-      run: |
-        echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
-        echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
-        echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
-        echo "IMAGE_TAG=${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
+      - name: Generate Image Tags
+        id: gen-ref
+        # Do not overwrite tags if set already from input
+        if: inputs.push-image && env.IMAGE_TAGS == ''
+        # We're pushing an image and no tags supplied, so create defaults
+        run: |
+          echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
+          echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_ENV
+          echo "${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{github.ref_name}}-latest" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "IMAGE_REF=${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}" >> $GITHUB_OUTPUT
 
-    - name: Setup SSH
-      run: |
-        mkdir -p -m 0700 "$HOME/.ssh"
-        ssh-keyscan -H github.com >> $HOME/.ssh/known_hosts
-        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-        ssh-add - <<< "${{ secrets.PYTHON_PRIVATE_REPO_KEY }}"
+      - name: Setup SSH
+        run: |
+          mkdir -p -m 0700 "$HOME/.ssh"
+          ssh-keyscan -H github.com >> $HOME/.ssh/known_hosts
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.PYTHON_PRIVATE_REPO_KEY }}"
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        install: true
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
 
-    - name: Login to DockerHub
-      if: inputs.push-image
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to DockerHub
+        if: inputs.push-image
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Info
-      run: |
-        echo "Push Image: ${{inputs.push-image}}"
-        echo "Tags: ${{env.IMAGE_TAGS}}"
-        echo "Python Version: ${{env.PYTHON_VERSION}}}"
+      - name: Info
+        run: |
+          echo "Push Image: ${{inputs.push-image}}"
+          echo "Tags: ${{env.IMAGE_TAGS}}"
+          echo "Python Version: ${{env.PYTHON_VERSION}}}"
+          echo "Short-SHA: ${{env.SHORT_SHA}}"
+          echo "Repository-suffix: ${{env.REPOSITORY_SUFFIX}}"
 
-    - name: Build image and push to Docker Hub
-      id: docker_build
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ${{ inputs.dockerfile }}
-        tags: ${{ env.IMAGE_TAGS }}
-        push: ${{ inputs.push-image }}
-        ssh: default
-        build-args: |
-          PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+      - name: Build image and push to Docker Hub
+        id: docker_build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          tags: ${{ env.IMAGE_TAGS }}
+          push: ${{ inputs.push-image }}
+          ssh: default
+          build-args: |
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
 
-    - name: Image digest
-      run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
+      - name: Image digest
+        run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
 
-    - name: Run Trivy vulnerability scanner
-      if: inputs.push-image
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{github.repository}}${{env.REPOSITORY_SUFFIX}}:${{env.SHORT_SHA}}
-        format: 'json'
-        output: 'trivy-results.json'
-        ignore-unfixed: true
-        timeout: 10m
-      env:
-        TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+  scan-image:
+    needs: [ build-push-image ]
+    if: inputs.push-image
+    secrets: inherit
+    uses: toggleglobal/workflows/.github/workflows/vulnerability-scanner.yml@main
+    with:
+      image: ${{ needs.build-push-image.outputs.image-ref }}
 
-    - name: Upload Trivy Reports
-      uses: actions/upload-artifact@v4
-      if: inputs.push-image
-      with:
-        name: Security Report
-        path: trivy-results.json
-        retention-days: 5
-
-    - name: Checkout Workflows Repo
-      if: inputs.push-image
-      uses: actions/checkout@v4
-      with:
-        repository: "toggleglobal/workflows"
-        token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-        path: workflows
-
-    - name: Run Trivy Parser
-      id: trivy-parser
-      if: inputs.push-image
-      run: ./workflows/.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
-      shell: bash
-
-    - name: Fail with Critical
-      if: inputs.push-image && steps.trivy-parser.outputs.stdout == 1
-      run: exit 1
-      
-    - name: Checkout Chart
-      if: inputs.push-image
-      uses: actions/checkout@v4
-      with:
-        repository: "toggleglobal/apps-infrastructure"
-        token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-        path: apps-infrastructure
-
-    - name: Setup git
-      if: inputs.push-image
-      run: |
-        git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
-        git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
-
-    - name: Update image tag
-      if: inputs.push-image
-      run: |
-        cd apps-infrastructure
-        if [[ ${{inputs.runs-as}} == "cronjob" ]]; then
-          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}-cronjob/values"
-        else
-          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}${{env.REPOSITORY_SUFFIX}}/values"
-        fi
-        if [[ ${{inputs.is-poc}} == true ]]; then
-          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/image-poc.yaml"
-        else
-          printf "common:\n  image:\n    tag: \"${{env.SHORT_SHA}}\"\n" > "${CHART_VALUES_PATH}/terminal-image-dev.yaml"
-        fi
-    - name: Commit new image
-      if: inputs.push-image
-      run: |
-        cd apps-infrastructure
-        git add .
-        if git status | grep -q "Changes to be committed"
-        then
-          git commit --message "Update image ${{ github.event.repository.name }}"
-          echo "Pushing git commit"
-          git push -u origin main
-        else
-          echo "No changes detected"
-        fi
+  update-app-chart:
+    needs: [ build-push-image, scan-image ]
+    if: inputs.push-image && !inputs.skip-deploy
+    secrets: inherit
+    uses: toggleglobal/workflows/.github/workflows/update-app-chart.yml@main
+    with:
+      runs-as: inputs.runs-as
+      short-sha: ${{ needs.build-push-image.outputs.short-sha }}
+      repository-suffix: ${{ needs.build-push-image.outputs.repository-suffix }}
