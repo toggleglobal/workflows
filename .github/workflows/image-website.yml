@@ -72,7 +72,7 @@ jobs:
       image-tag: ${{ steps.generate-image-tags.outputs.IMAGE_TAG }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - id: generate-image-tags
         if: inputs.push-image
         run: |
@@ -88,7 +88,7 @@ jobs:
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add - <<< "${{ secrets.GO_PRIVATE_REPO_KEY }}"
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
       - name: Login to DockerHub
@@ -156,7 +156,7 @@ jobs:
         run: exit 1
       - name: Checkout Chart
         if: inputs.push-image && !inputs.skip-deploy
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "toggleglobal/apps-infrastructure"
           token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
