@@ -54,8 +54,8 @@ on:
         type: string
 
 jobs:
-  build-push-image:
-    name: Build and Push Image
+  build-image:
+    name: Build
     runs-on: ubuntu-latest
     outputs:
       image-ref: ${{ steps.gen-ref.outputs.IMAGE_REF }}
@@ -163,19 +163,19 @@ jobs:
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
 
   scan-image:
-    needs: [ build-push-image ]
+    needs: [ build-image ]
     if: inputs.push-image
     secrets: inherit
     uses: toggleglobal/workflows/.github/workflows/vulnerability-scanner.yml@main
     with:
-      image: ${{ needs.build-push-image.outputs.image-ref }}
+      image: ${{ needs.build-image.outputs.image-ref }}
 
   update-app-chart:
-    needs: [ build-push-image, scan-image ]
+    needs: [ build-image, scan-image ]
     if: inputs.push-image && !inputs.skip-deploy
     secrets: inherit
     uses: toggleglobal/workflows/.github/workflows/update-app-chart.yml@main
     with:
       runs-as: inputs.runs-as
-      short-sha: ${{ needs.build-push-image.outputs.short-sha }}
-      repository-suffix: ${{ needs.build-push-image.outputs.repository-suffix }}
+      short-sha: ${{ needs.build-image.outputs.short-sha }}
+      repository-suffix: ${{ needs.build-image.outputs.repository-suffix }}
