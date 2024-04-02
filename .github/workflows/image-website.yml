@@ -58,8 +58,8 @@ on:
         value: ${{ jobs.build-image.outputs.image }}
 
 jobs:
-  build-image:
-    name: Build
+  build-push-image:
+    name: Build and Push Image
     runs-on: ubuntu-latest
     env:
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -120,80 +120,21 @@ jobs:
             CDN_PATH=${{ inputs.cdn-path }}
       - name: Image digest
         run: echo "::notice ::Image digest ${{ steps.docker_build.outputs.digest }}"
-      - name: Run Trivy vulnerability scanner
-        if: inputs.push-image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.IMAGE }}
-          format: "json"
-          output: "trivy-results.json"
-          ignore-unfixed: true
-          timeout: 10m
-        env:
-          TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Upload Trivy Reports
-        uses: actions/upload-artifact@v4
-        if: inputs.push-image
-        with:
-          name: Security Report
-          path: trivy-results.json
-          retention-days: 5
-      - name: Checkout Workflows Repo
-        if: inputs.push-image
-        uses: actions/checkout@v4
-        with:
-          repository: "toggleglobal/workflows"
-          token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-          path: workflows
-      - name: Run Trivy Parser
-        id: trivy-parser
-        if: inputs.push-image
-        run: ./workflows/.github/workflows/scripts/trivyresult_parser.sh trivy-results.json
-        shell: bash
-      - name: Fail with Critical
-        if: inputs.push-image && steps.trivy-parser.outputs.stdout == 1
-        run: exit 1
-      - name: Checkout Chart
-        if: inputs.push-image && !inputs.skip-deploy
-        uses: actions/checkout@v3
-        with:
-          repository: "toggleglobal/apps-infrastructure"
-          token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-          path: apps-infrastructure
-      - name: Setup git
-        if: inputs.push-image && !inputs.skip-deploy
-        run: |
-          git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
-          git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
-      - name: Update image tag
-        if: inputs.push-image && !inputs.skip-deploy
-        run: |
-          cd apps-infrastructure
-          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
-          printf "common:\n  image:\n    tag: \"${{env.IMAGE_TAG}}\"\n" > "${CHART_VALUES_PATH}/toggle-image-${{inputs.environment}}.yaml"
-      - name: Commit new image
-        env:
-          GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
-        if: inputs.push-image && !inputs.skip-deploy
-        run: |
-          cd apps-infrastructure
-          git add .
-          if git status | grep -q "Changes to be committed"
-          then
-            if [[ ${{inputs.environment}} == "prod" ]]; then
-              BRANCH_NAME="${{ github.event.repository.name }}-${GITHUB_RUN_ID}"
-              git checkout -b ${BRANCH_NAME}
-              git commit --message "Promote to ${{inputs.environment}} from ${{ github.event.repository.name }}"
-              echo "Pushing git commit"
-              git push -u origin ${BRANCH_NAME}
-              echo "Creating a pull request"
-              gh pr create -t "Promote to ${{inputs.environment}} ${{ github.event.repository.name }}" -B "main" -b "Promote to production ${{ github.event.repository.name }}" -H ${BRANCH_NAME}
-            else
-              git commit --message "Update ${{ inputs.environment }} env image ${{ github.event.repository.name }}"
-              echo "Pushing git commit"
-              git push -u origin main
-            fi
-          else
-            echo "No changes detected"
-          fi
+
+  scan-image:
+    needs: [ build-push-image ]
+    if: inputs.push-image
+    secrets: inherit
+    uses: toggleglobal/workflows/.github/workflows/vulnerability-scanner.yml@main
+    with:
+      image: ${{ needs.build-push-image.outputs.image }}
+
+  update-app-chart:
+    needs: [ build-push-image, scan-image ]
+    if: inputs.push-image && !inputs.skip-deploy
+    secrets: inherit
+    uses: toggleglobal/workflows/.github/workflows/update-app-chart.yml@main
+    with:
+      runs-as: inputs.runs-as
+      short-sha: ${{ needs.build-push-image.outputs.image-tag }}
+      environment: ${{ inputs.environment }}
