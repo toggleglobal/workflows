@@ -70,7 +70,7 @@ jobs:
           git add .
           if git status | grep -q "Changes to be committed"
           then
-            git commit --message "Update \"${{inputs.environment}}\" env image ${{ github.event.repository.name }}"
+            git commit --message "Update ${{ inputs.environment }} env image ${{ github.event.repository.name }}"
             echo "Pushing git commit"
             git push -u origin main
           else
