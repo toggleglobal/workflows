@@ -37,8 +37,6 @@ on:
 jobs:
   update-app-chart:
     runs-on: ubuntu-latest
-    env:
-      TARGET_ENV: ${{ inputs.environment }}
     steps:    
       - name: Checkout Chart
         uses: actions/checkout@v4
@@ -72,7 +70,7 @@ jobs:
           git add .
           if git status | grep -q "Changes to be committed"
           then
-            git commit --message "Update ${{ env.TARGET_ENV }} env image ${{ github.event.repository.name }}"
+            git commit --message "Update ${{ inputs.environment }} env image ${{ github.event.repository.name }}"
             echo "Pushing git commit"
             git push -u origin main
           else

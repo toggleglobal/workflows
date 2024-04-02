@@ -133,4 +133,4 @@ jobs:
       runs-as: inputs.runs-as
       short-sha: ${{ needs.build-push-image.outputs.short-sha }}
       repository-suffix: ${{ needs.build-push-image.outputs.repository-suffix }}
-      environment: inputs.environment
+      environment: ${{ inputs.environment }}
