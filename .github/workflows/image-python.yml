@@ -94,7 +94,7 @@ jobs:
 
       - name: Short SHA
         id: short-sha
-        if: inputs.push-image
+        if: inputs.push-image && env.IMAGE_TAGS == ''
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV

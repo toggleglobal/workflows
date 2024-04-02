@@ -56,7 +56,6 @@ on:
 jobs:
   build-push-image:
     name: Build and Push Image
-    if: inputs.push-image
     runs-on: ubuntu-latest
     outputs:
       image-ref: ${{ steps.gen-ref.outputs.IMAGE_REF }}
@@ -88,7 +87,7 @@ jobs:
 
       - name: Short SHA
         id: short-sha
-        if: inputs.push-image
+        if: inputs.push-image && env.IMAGE_TAGS == ''
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
