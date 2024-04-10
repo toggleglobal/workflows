@@ -127,7 +127,7 @@ jobs:
     secrets: inherit
     uses: toggleglobal/workflows/.github/workflows/vulnerability-scanner.yml@main
     with:
-      image: ${{ needs.build-image.outputs.image-ref }}
+      image: ${{ needs.build-image.outputs.image-tag}}
 
   update-app-chart:
     needs: [ build-image, scan-image ]
@@ -135,5 +135,5 @@ jobs:
     secrets: inherit
     uses: toggleglobal/workflows/.github/workflows/update-app-fe-chart.yml@rf-website-vulnscan-reuseble-workflow
     with:
-      short-sha: ${{ needs.build-image.outputs.short-sha }}
+      short-sha: ${{ needs.build-image.outputs.image-tag }}
       environment: ${{ inputs.environment }}
