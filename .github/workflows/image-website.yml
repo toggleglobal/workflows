@@ -127,7 +127,7 @@ jobs:
     secrets: inherit
     uses: toggleglobal/workflows/.github/workflows/vulnerability-scanner.yml@main
     with:
-      image: ${{ needs.build-image.outputs.image-tag}}
+      image: ${{ needs.build-image.outputs.image}}
 
   update-app-chart:
     needs: [ build-image, scan-image ]
