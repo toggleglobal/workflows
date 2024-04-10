@@ -1,0 +1,63 @@
+on:
+  workflow_call:
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+      DEPLOYER_GITHUB_TOKEN:
+        required: true
+    inputs:
+      short-sha:
+        description: git commit short-sha hash
+        required: true
+        type: string 
+      environment:
+        description: The target environment to build and deploy image
+        required: false
+        default: dev
+        type: string
+
+jobs:
+  update-app-chart:
+    runs-on: ubuntu-latest
+    steps:    
+      - name: Checkout Chart
+        uses: actions/checkout@v4
+        with:
+          repository: "toggleglobal/apps-infrastructure"
+          token: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+          path: apps-infrastructure
+      - name: Setup git
+        run: |
+          git config --global user.email "${{ secrets.DEPLOYER_EMAIL }}"
+          git config --global user.name "${{ secrets.DEPLOYER_USERNAME }}"
+      - name: Update image tag
+        run: |
+          cd apps-infrastructure
+          CHART_VALUES_PATH="./charts/${{ github.event.repository.name }}/values"
+          printf "common:\n  image:\n    tag: \"${{inputs.short-sha}}\"\n" > "${CHART_VALUES_PATH}/toggle-image-${{inputs.environment}}.yaml"
+      - name: Commit new image
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOYER_GITHUB_TOKEN }}
+        run: |
+          cd apps-infrastructure
+          git add .
+          if git status | grep -q "Changes to be committed"
+          then
+            if [[ ${{inputs.environment}} == "prod" ]]; then
+              BRANCH_NAME="${{ github.event.repository.name }}-${GITHUB_RUN_ID}"
+              git checkout -b ${BRANCH_NAME}
+              git commit --message "Promote to ${{inputs.environment}} from ${{ github.event.repository.name }}"
+              echo "Pushing git commit"
+              git push -u origin ${BRANCH_NAME}
+              echo "Creating a pull request"
+              gh pr create -t "Promote to ${{inputs.environment}} ${{ github.event.repository.name }}" -B "main" -b "Promote to production ${{ github.event.repository.name }}" -H ${BRANCH_NAME}
+            else
+              git commit --message "Update ${{ inputs.environment }} env image ${{ github.event.repository.name }}"
+              echo "Pushing git commit"
+              git push -u origin main
+            fi
+          else
+            echo "No changes detected"
+          fi
