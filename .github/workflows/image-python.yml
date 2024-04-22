@@ -177,6 +177,6 @@ jobs:
     secrets: inherit
     uses: toggleglobal/workflows/.github/workflows/update-app-chart.yml@main
     with:
-      runs-as: inputs.runs-as
+      runs-as: ${{ inputs.runs-as }}
       short-sha: ${{ needs.build-push-image.outputs.short-sha }}
       repository-suffix: ${{ needs.build-push-image.outputs.repository-suffix }}
