@@ -88,7 +88,7 @@ jobs:
         }
       MANTICORE: >-
         "manticore": {
-        "image": "manticoresearch/manticore",
+        "image": "manticoresearch/manticore:6.2.12",
         "ports":["9306:9306"],
         "options": "--health-cmd \"searchd --status\" --health-interval 10s --health-timeout 5s --health-retries 5"
         }
