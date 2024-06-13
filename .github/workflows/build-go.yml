@@ -158,7 +158,7 @@ jobs:
           echo "::notice ::Requires Manticore: ${{ inputs.requires-manticore }}"
 
   build:
-    name: Build (not) & Test
+    name: Build & Test
     runs-on: ubuntu-latest
     needs: required
     services: ${{fromJSON(needs.required.outputs.services)}}
