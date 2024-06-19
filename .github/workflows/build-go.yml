@@ -33,6 +33,9 @@ on:
       requires-manticore:
         type: boolean
         required: false
+      requires-nats:
+        type: boolean
+        required: false
       skip-format-check:
         description: Prevents verification of go file formatting with goimports when set to true. Required until https://github.com/golang/go/issues/42965 is resolved.
         required: false
@@ -92,6 +95,12 @@ jobs:
         "ports":["9306:9306"],
         "options": "--health-cmd \"searchd --status\" --health-interval 10s --health-timeout 5s --health-retries 5"
         }
+      NATS: >-
+        "nats": {
+        "image": "nats:latest",
+        "ports":["4222:4222"],
+        "command": ["--js"]
+        }
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.required.outputs.services }}
@@ -144,6 +153,14 @@ jobs:
           else
             echo 'SERVICES=${{env.SERVICES}},${{env.MANTICORE}}' >> $GITHUB_ENV
           fi
+      - name: Requires NATS
+        if: inputs.requires-nats
+        run: |
+          if [[ -z '${{ env.SERVICES }}' ]]; then
+            echo 'SERVICES=${{env.SERVICES}}${{env.NATS}}' >> $GITHUB_ENV
+          else
+            echo 'SERVICES=${{env.SERVICES}},${{env.NATS}}' >> $GITHUB_ENV
+          fi
       - id: required
         run: |
           echo services='{${{env.SERVICES}}}' >> $GITHUB_OUTPUT
@@ -156,6 +173,7 @@ jobs:
           echo "::notice ::Requires Vault: ${{ inputs.requires-vault }}"
           echo "::notice ::Requires ClickHouse: ${{ inputs.requires-clickhouse }}"
           echo "::notice ::Requires Manticore: ${{ inputs.requires-manticore }}"
+          echo "::notice ::Requires NATS: ${{ inputs.requires-nats }}"
 
   build:
     name: Build & Test
@@ -184,6 +202,7 @@ jobs:
       SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       LOCALAZY_READ_KEY: ${{ secrets.LOCALAZY_READ_KEY }}
       LOCALAZY_WRITE_KEY: ${{ secrets.LOCALAZY_WRITE_KEY }}
+      NATS_BROKERS: localhost:4222
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
