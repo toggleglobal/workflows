@@ -95,12 +95,6 @@ jobs:
         "ports":["9306:9306"],
         "options": "--health-cmd \"searchd --status\" --health-interval 10s --health-timeout 5s --health-retries 5"
         }
-      NATS: >-
-        "nats": {
-        "image": "nats:alpine",
-        "ports":["4222:4222"],
-        "options": "--health-cmd 'wget http://localhost:8222/healthz -q -S -O -' --health-interval 10s --health-timeout 10s --health-retries 10"
-        }
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.required.outputs.services }}
@@ -153,14 +147,6 @@ jobs:
           else
             echo 'SERVICES=${{env.SERVICES}},${{env.MANTICORE}}' >> $GITHUB_ENV
           fi
-      - name: Requires NATS
-        if: inputs.requires-nats
-        run: |
-          if [[ -z '${{ env.SERVICES }}' ]]; then
-            echo 'SERVICES=${{env.SERVICES}}${{env.NATS}}' >> $GITHUB_ENV
-          else
-            echo 'SERVICES=${{env.SERVICES}},${{env.NATS}}' >> $GITHUB_ENV
-          fi
       - id: required
         run: |
           echo services='{${{env.SERVICES}}}' >> $GITHUB_OUTPUT
@@ -173,7 +159,6 @@ jobs:
           echo "::notice ::Requires Vault: ${{ inputs.requires-vault }}"
           echo "::notice ::Requires ClickHouse: ${{ inputs.requires-clickhouse }}"
           echo "::notice ::Requires Manticore: ${{ inputs.requires-manticore }}"
-          echo "::notice ::Requires NATS: ${{ inputs.requires-nats }}"
 
   build:
     name: Build & Test
