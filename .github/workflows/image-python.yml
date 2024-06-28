@@ -57,6 +57,11 @@ on:
         default: service
         required: false
         type: string
+      git-lfs:
+        description: Set to true if using Git LFS
+        default: false
+        required: false
+        type: boolean
     outputs:
       image-tag:
         value: ${{ jobs.build-push-image.outputs.image-tag }}
@@ -91,6 +96,8 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          lfs: ${{ inputs.git-lfs }}
 
       - name: Short SHA
         id: short-sha
