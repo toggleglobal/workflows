@@ -47,7 +47,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          lfs: ${{ inputs.git-lfs }}
+          lfs: inputs.git-lfs
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

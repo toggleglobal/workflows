@@ -97,7 +97,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          lfs: ${{ inputs.git-lfs }}
+          lfs: inputs.git-lfs
 
       - name: Short SHA
         id: short-sha
