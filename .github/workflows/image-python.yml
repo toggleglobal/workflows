@@ -62,6 +62,11 @@ on:
         default: false
         required: false
         type: boolean
+      trivy-skip-dirs:
+        description: Comma separated list of directories where traversal is skipped
+        required: false
+        default: ''
+        type: string
     outputs:
       image-tag:
         value: ${{ jobs.build-push-image.outputs.image-tag }}
@@ -177,6 +182,7 @@ jobs:
     uses: toggleglobal/workflows/.github/workflows/vulnerability-scanner.yml@main
     with:
       image: ${{ needs.build-push-image.outputs.image-ref }}
+      skip-dirs: ${{ inputs.trivy-skip-dirs }}
 
   update-app-chart:
     needs: [ build-push-image, scan-image ]
