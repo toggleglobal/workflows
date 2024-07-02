@@ -174,7 +174,7 @@ jobs:
     needs: [ build-push-image ]
     if: inputs.push-image
     secrets: inherit
-    uses: toggleglobal/workflows/.github/workflows/vulnerability-scanner.yml@main
+    uses: toggleglobal/workflows/.github/workflows/vulnerability-scanner.yml@test_trivy
     with:
       image: ${{ needs.build-push-image.outputs.image-ref }}
 
